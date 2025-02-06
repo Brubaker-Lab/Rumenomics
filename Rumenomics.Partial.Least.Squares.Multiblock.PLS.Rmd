@@ -1,0 +1,367 @@
+---
+title: "PLS Multiblock Rumenomics Paper"
+author: "Rumenomics Team"
+date: "2023-01-13"
+output: ''
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load Libraries
+
+```{r Package Import}
+suppressWarnings(library (ggplot2, verbose = FALSE))
+suppressWarnings(library (readxl, verbose = FALSE))
+suppressWarnings(library (viridisLite, verbose = FALSE))
+suppressWarnings(library (pheatmap, verbose = FALSE))
+suppressWarnings(library (mixOmics, verbose = FALSE))
+suppressWarnings(library(tidyverse, verbose = FALSE))
+suppressWarnings(library(magrittr, verbose = FALSE))
+suppressWarnings(library (dplyr, verbose = FALSE))
+suppressWarnings(library (MASS, verbose = FALSE))
+suppressWarnings(library (lattice, verbose = FALSE))
+```
+
+
+######################################################################################
+
+# PLS number index
+
+######################################################################################
+
+```{r}
+## Suplemental Material 1 Metabolite feature metadata (8848 rows x 7 columns)
+
+data_file <- "~/Documents/PURDUE/PURDUE UNIVERSITY/17.-Projects/4.Rumenomics_Paper/3.Rumenomics.R.Workbook/6.PLS.Multiblock.Analysis/Data_Metabolites.xlsx"
+if(file.exists(data_file)){
+    covariates <- read_excel(path = data_file, sheet = 1)
+} else {
+  print("Supplementary Dataset 1- Metabolite feature metadata.xlsx.  Check the location of the file relative to your Rmd file.")
+}
+covariates
+```
+
+
+```{r}
+## Suplemental Material 1 Metabolite feature metadata (8848 rows x 7 columns)
+
+data_file <- "~/Documents/PURDUE/PURDUE UNIVERSITY/17.-Projects/4.Rumenomics_Paper/3.Rumenomics.R.Workbook/6.PLS.Multiblock.Analysis/Data_Metabolites.xlsx"
+if(file.exists(data_file)){
+    metabolites <- read_excel(path = data_file, sheet = 3)
+} else {
+  print("Supplementary Dataset 1- Metabolite feature metadata.xlsx.  Check the location of the file relative to your Rmd file.")
+}
+metabolites
+metabolites.x <- metabolites [-1]
+metabolites.x
+```
+
+######################################################################################
+
+# Metabolites sPLSDA: Metabolites x Sex
+
+######################################################################################
+
+```{r}
+metabolites.x.sex <-  metabolites.x[1:16, ]
+metabolites.x.sex
+```
+
+```{r}
+Y.sex <- covariates$Sex[1:16]
+Y.sex
+
+Y.breed <- as.factor(covariates$Breed[1:16])
+Y.breed
+is.na (Y.breed)
+
+Y.weight<- covariates$Weight[1:16]
+Y.weight
+
+Y.age<- covariates$Age[1:16]
+Y.age
+```
+```{r}
+X <- list (metabolites = metabolites.x.sex)
+X
+```
+
+```{r}
+Y <- cbind (sex = covariates$Sex_regression, weight = Y.weight, age = Y.age)
+Y
+```
+```{r}
+#list.keepX = list(mrna = rep(20, 2), mirna = rep(10,2), protein = rep(10, 2))
+# Fit the multi-block Y PLS model
+fit <- block.spls(X = X, Y=Y, ncomp = 3)
+fit
+```
+
+
+```{r}
+plotIndiv(fit, ind.names = TRUE)
+# illustrates coefficient weights in each block
+plotLoadings(fit, ncomp = 1, contrib = 'max')
+plotVar(fit, style = 'graphics', legend = F)
+```
+
+```{r}
+(as.data.frame (fit$loadings$metabolites))
+```
+
+```{r}
+scores.Y <- as.data.frame (fit$variates$Y)
+scores.Y
+```
+```{r}
+library (ggrepel)
+#pdf("plot.blockY.splsda.scores.metabolites.sex.pdf", width = 5, height = 4)
+ggplot (scores.Y, aes ((comp1), (comp2))) + geom_point(size =4, aes(colour =covariates$Sex)) + theme_bw() #+ geom_text_repel (aes (comp1, comp2, label = covariates$Sex, colour = covariates$Sex), label.size = 0.25, show.legend = NA, hjust = 0 , nudge_x = 0.001) 
+#dev.off()
+```
+```{r}
+pdf("plot.blockY.splsda.scores.metabolites.age.pdf", width = 5.4, height = 4)
+ggplot (scores.Y, aes ((comp1), (comp2))) + geom_point(size =4, aes(colour = covariates$Age)) + theme_bw() #+ geom_text_repel (label = factor (covariates$Age), aes(colour = factor (covariates$Age)), hjust = 0, nudge_x = 0.001) 
+dev.off()
+```
+
+```{r}
+pdf("plot.blockY.splsda.scores.metabolites.weight.pdf", width = 5.4, height = 4)
+ggplot (scores.Y, aes ((comp1), (comp2))) + geom_point(size =4, aes(colour = covariates$Weight)) + theme_bw() #+ geom_text_repel (label = factor (covariates$Weight), aes(colour = factor (covariates$Weight)), hjust = 0, nudge_x = 0.001) 
+dev.off()
+```
+
+```{r}
+metabolites.Loadings <- as.data.frame (fit$loadings$metabolites)
+metabolites.Loadings
+LV1.positive <- metabolites.Loadings %>% select (comp1) %>% arrange (desc (comp1)) %>% top_n(10) 
+LV1.positive
+LV1.negative <- metabolites.Loadings %>% select (comp1) %>% arrange ((comp1)) %>% top_n(-10) 
+LV1.negative 
+LV1 <- rbind (LV1.positive, LV1.negative) %>% rownames_to_column("name") %>% dplyr::select ("name", "comp1")
+LV1
+```
+```{r}
+metabolites.Loadings <- as.data.frame (fit$loadings$metabolites)
+metabolites.Loadings
+LV2.positive <- metabolites.Loadings %>% select (comp2) %>% arrange (desc (comp2)) %>% top_n(10) 
+LV2.positive
+LV2.negative <- metabolites.Loadings %>% select (comp2) %>% arrange ((comp2)) %>% top_n (-10) 
+LV2.negative 
+LV2 <- rbind (LV2.positive, LV2.negative) %>% rownames_to_column("name") %>% dplyr::select ("name", "comp2")
+LV2
+```
+```{r}
+pdf("plot.blockY.splsda.loadings.metabolites.pdf", width = 5, height = 4)
+plot.loadings.block.spls <- ggplot(LV1, aes(x=reorder (name, -comp1), y=comp1)) + geom_col(color="black", fill="#E69F00", width = 0.6) + theme(legend.text = element_text(colour="black", size=5)) +  theme(legend.title = element_text(colour="black", size=5)) + labs(y = "loadings", x = "Metabolites") + theme(axis.title.x = element_text(size = 5)) + theme(axis.title.y = element_text(size = 5)) +theme(axis.title.y = element_text(size = 5)) + theme_bw(base_size = 15) + theme(legend.position = "top") + coord_flip() 
+plot.loadings.block.spls
+dev.off()
+```
+
+
+```{r}
+pdf("plot.blockY.splsda.loadings.metabolites2.pdf", width = 5, height = 4)
+plot.loadings.block.spls <- ggplot(LV2, aes(x=reorder (name, -comp2), y=comp2)) + geom_col(color="black", fill="#E69F00", width = 0.6) + theme(legend.text = element_text(colour="black", size=5)) +  theme(legend.title = element_text(colour="black", size=5)) + labs(y = "loadings", x = "Metabolites") + theme(axis.title.x = element_text(size = 5)) + theme(axis.title.y = element_text(size = 5)) +theme(axis.title.y = element_text(size = 5)) + theme_bw(base_size = 15) + theme(legend.position = "top") + coord_flip() 
+plot.loadings.block.spls
+dev.off()
+```
+
+
+```{r}
+metabolites.Loadings <- as.data.frame (fit$loadings$metabolites) %>% rownames_to_column("name")
+metabolites.Loadings
+```
+
+```{r}
+#pdf("plot.blockY.splsda.scores.metabolites.toploadings.pdf.quadrants.pdf", width = 10, height = 8)
+ggplot (metabolites.Loadings, aes ((comp1), (comp2))) + geom_point(data = subset (metabolites.Loadings, comp1 < -0.02 & comp2 > 0.01 | comp1 < - 0.02 & comp2 < -0.01 | comp1 > 0.04 & comp2 > 0.03), aes (comp1, comp2, label = name), colour = "#e376a0", size = 3) + theme_bw() + geom_text_repel (data = subset (metabolites.Loadings, comp1 < -0.02 & comp2 > 0.01 | comp1 < - 0.02 & comp2 < -0.01 | comp1 > 0.04 & comp2 > 0.03), aes (comp1, comp2, label = name), colour = "black", hjust = 0, nudge_x = 0.001)
+#dev.off()
+```
+```{r}
+metabolites.Loadings
+```
+
+
+```{r}
+    #-- initialisation des matrices --#
+    W = fit$loadings$metabolites
+    H = fit$ncomp
+    q = ncol(fit$loadings$Y)
+    p = ncol(fit$X$metabolites)
+    VIP = matrix(0, nrow = p, ncol = H)
+    
+    cor2 = cor(fit$variates$Y, fit$variates$metabolites, use = "pairwise")^2
+    cor2 = as.matrix(cor2, nrow = q)
+     
+    VIP[, 1] = W[, 1]^2
+     
+    if (H[1] > 1)
+    {
+        for (h in 2:H)
+        {
+            if (q == 1)
+            {
+                Rd = cor2[, 1:h] 
+                VIP[, h] = Rd %*% t(W[, 1:h]^2) / sum(Rd)
+            } else {
+                Rd = apply(cor2[, 1:h], 2, sum)
+                VIP[, h] = Rd %*% t(W[, 1:h]^2) / sum(Rd)
+            }
+        }
+    }
+     
+    #-- valeurs sortantes --#
+    VIP = sqrt(p * VIP)
+    rownames(VIP) = rownames(W)
+    colnames(VIP)= paste("comp", 1:H)
+    ((VIP))
+```
+```{r}
+plot.VIP <- as.data.frame (VIP) %>% rownames_to_column(., var = "metabolites")
+plot.VIP
+
+library(writexl)
+write_xlsx(plot.VIP, path = "plot_VIP_multiblock.xlsx")
+```
+```{r}
+pdf("plot_VIP.pdf", width = 5, height = 5)
+plot.VIP.block.spls <- ggplot(plot.VIP, aes(x = reorder(metabolites, `comp 1`), y = `comp 1`)) +
+  geom_col(color = "black", fill = "lightblue", width = 0.6) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "blue") +  # Add vertical line at x = 1
+  theme(legend.text = element_text(colour = "black", size = 5)) +
+  theme(legend.title = element_text(colour = "black", size = 5)) +
+  labs(x = "Metabolites", y = "VIP") +
+  theme(axis.title.x = element_text(size = 5)) +
+  theme(axis.title.y = element_text(size = 5)) +
+  theme_bw(base_size = 15) +
+  theme(legend.position = "top") +
+  coord_flip()
+plot.VIP.block.spls
+dev.off()
+plot.VIP.block.spls
+```
+```{r}
+# Filter the data for comp1 > 1.6
+plot.VIP <- plot.VIP %>%
+  filter(`comp 1` > 1.6)
+
+# Save the plot to PDF
+pdf("plot_VIP.pdf", width = 5, height = 5)
+
+# Generate the plot
+plot.VIP.block.spls <- ggplot(plot.VIP, aes(x = reorder(metabolites, `comp 1`), y = `comp 1`)) +
+  geom_col(color = "black", fill = "lightblue", width = 0.6) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "blue") +  # Add horizontal line at y = 1
+  labs(x = "Metabolites", y = "VIP") +
+  theme_bw(base_size = 15) +
+  theme(
+    axis.title.x = element_text(size = 5),
+    axis.title.y = element_text(size = 5),
+    legend.position = "top",
+    legend.text = element_text(colour = "black", size = 5),
+    legend.title = element_text(colour = "black", size = 5)
+  )+  coord_flip() 
+
+# Display the plot
+print(plot.VIP.block.spls)
+
+# Close the PDF device
+dev.off()
+
+plot.VIP.block.spls
+```
+
+```{r}
+# Filter the data for comp1 > 1.6
+plot.VIP2 <- plot.VIP %>%
+  filter(`comp 2` > 1.45)
+
+# Save the plot to PDF
+pdf("plot_VIP2.pdf", width = 5, height = 5)
+
+# Generate the plot
+plot.VIP.block.spls <- ggplot(plot.VIP2, aes(x = reorder(metabolites, `comp 2`), y = `comp 2`)) +
+  geom_col(color = "black", fill = "lightblue", width = 0.6) +
+  geom_hline(yintercept = 1, linetype = "dashed", color = "blue") +  # Add horizontal line at y = 1
+  labs(x = "Metabolites", y = "VIP") +
+  theme_bw(base_size = 15) +
+  theme(
+    axis.title.x = element_text(size = 5),
+    axis.title.y = element_text(size = 5),
+    legend.position = "top",
+    legend.text = element_text(colour = "black", size = 5),
+    legend.title = element_text(colour = "black", size = 5)
+  )+  coord_flip() 
+
+# Display the plot
+print(plot.VIP.block.spls)
+
+# Close the PDF device
+dev.off()
+
+plot.VIP.block.spls
+```
+
+```{r}
+LV1.positive.plot <- metabolites.Loadings %>% arrange (desc (comp1)) 
+LV1.positive.plot <- LV1.positive.plot [1:50, ]
+LV1.positive.plot
+LV1.negative.plot <- metabolites.Loadings %>% arrange ((comp1)) 
+LV1.negative.plot <- LV1.negative.plot [1:50, ]
+LV1.negative.plot
+plot <- rbind (LV1.positive.plot, LV1.negative.plot) %>% rownames_to_column("row_name") %>% dplyr::select ("name", "comp1", "comp2")
+plot
+```
+```{r}
+#pdf("plot.blockY.splsda.scores.metabolites.toploadings.pdf", width = 10, height = 10)
+ggplot (plot, aes ((comp1), (comp2))) + geom_point(colour = "#14130f", size = 3) + theme_bw() 
+#dev.off()
+```
+
+```{r}
+LV2.positive.plot <- metabolites.Loadings %>% arrange (desc (comp2)) 
+LV2.positive.plot <- LV2.positive.plot [1:50, ]
+LV2.positive.plot
+LV2.negative.plot <- metabolites.Loadings %>% arrange ((comp2)) 
+LV2.negative.plot <- LV2.negative.plot [1:50, ]
+LV2.negative.plot
+plot.LV2<- rbind (LV2.positive.plot, LV1.negative.plot) %>% rownames_to_column("row_name") %>% dplyr::select ("name", "comp1", "comp2")
+plot.LV2
+```
+```{r}
+#pdf("plot.blockY.splsda.scores.metabolites.toploadings.pdf", width = 10, height = 10)
+ggplot (plot.LV2, aes ((comp1), (comp2))) + geom_point(colour = "#14130f", size = 3) + theme_bw() 
+#dev.off()
+```
+
+```{r}
+Top_200_loadings <- rbind (plot, plot.LV2)
+Top_200_loadings
+```
+```{r}
+pdf("plot.blockY.splsda.scores.metabolites.top200loadings.pdf", width = 10, height = 10)
+ggplot (Top_200_loadings, aes ((comp1), (comp2))) + geom_point(colour = "#e376a0", size = 3) + theme_bw() + geom_text_repel (aes (comp1, comp2, label = name), colour = "black", hjust = 0, nudge_x = 0.001)
+dev.off()
+```
+
+```{r}
+fit$keepX
+```
+
+```{r}
+fit
+plotLoadings(fit, comp = 1, block = Y)
+```
+```{r}
+metabolites.Loadings <- metabolites.Loadings %>% rownames_to_column("row_name")
+metabolites.Loadings
+library (openxlsx)
+write.xlsx(metabolites.Loadings, file = "metabolites.Loadings.xlsx")
+```
+
+```{r}
+sessionInfo()
+```
+

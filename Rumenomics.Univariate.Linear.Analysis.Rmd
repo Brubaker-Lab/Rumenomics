@@ -1,0 +1,493 @@
+---
+title: "Univariate_Linear_Model Rumenomics Paper"
+author: "Rumenomics Team
+date: "2023-01-13"
+output: ''
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load Libraries
+
+```{r Package Import}
+suppressWarnings(library (ggplot2, verbose = FALSE))
+suppressWarnings(library (readxl, verbose = FALSE))
+suppressWarnings(library (viridisLite, verbose = FALSE))
+suppressWarnings(library (pheatmap, verbose = FALSE))
+suppressWarnings(library (mixOmics, verbose = FALSE))
+suppressWarnings(library(tidyverse, verbose = FALSE))
+suppressWarnings(library(magrittr, verbose = FALSE))
+suppressWarnings(library (dplyr, verbose = FALSE))
+suppressWarnings(library (MASS, verbose = FALSE))
+suppressWarnings(library (lattice, verbose = FALSE))
+```
+
+################################################################################
+
+# Main Interactions Effects
+
+################################################################################
+
+```{r}
+## Suplemental Material 1 Metabolite feature metadata (8848 rows x 7 columns)
+
+data_file <- "~/Documents/PURDUE/PURDUE UNIVERSITY/17.-Projects/4.Rumenomics_Paper/3.Rumenomics.R.Workbook/3.Univariate.Analysis/Data_Metabolites.xlsx"
+if(file.exists(data_file)){
+    covariates <- read_excel(path = data_file, sheet = 1)
+} else {
+  print("Supplementary Dataset 1- Metabolite feature metadata.xlsx.  Check the location of the file relative to your Rmd file.")
+}
+covariates
+```
+
+```{r}
+## Suplemental Material 1 Metabolite feature metadata (8848 rows x 7 columns)
+
+data_file <- "~/Documents/PURDUE/PURDUE UNIVERSITY/17.-Projects/4.Rumenomics_Paper/3.Rumenomics.R.Workbook/3.Univariate.Analysis/Data_Metabolites.xlsx"
+if(file.exists(data_file)){
+    Y.Metabolites <- read_excel(path = data_file, sheet = 3)
+} else {
+  print("Supplementary Dataset 1- Metabolite feature metadata.xlsx.  Check the location of the file relative to your Rmd file.")
+}
+ Y.Metabolites
+```
+
+## Z_score calculation and heatmap preprocessing
+
+```{r}
+Y.metabolites.heatmap <- data.frame (t(Y.Metabolites))
+names (Y.metabolites.heatmap) <- Y.metabolites.heatmap[1, ]
+Y.metabolites.heatmap <- Y.metabolites.heatmap[-1,]
+Y.metabolites.heatmap
+```
+
+```{r}
+Y.metabolites.heatmap.zscore <- as.data.frame(lapply(Y.metabolites.heatmap, as.double))
+Y.metabolites.heatmap.zscore
+# find mean 
+mean_lfq <- apply(Y.metabolites.heatmap.zscore,2,mean)
+mean_lfq
+```
+```{r}
+# find standard deviation
+sd_lfq <- apply (Y.metabolites.heatmap.zscore,2, sd)
+sd_lfq
+```
+```{r}
+# calculate z
+z_score_Y.metabolites <- (Y.metabolites.heatmap.zscore - mean_lfq) / sd_lfq
+z_score_Y.metabolites
+saveRDS (file = "z_score_Y.metabolites.RDS", z_score_Y.metabolites)
+```
+```{r}
+z_score_Y.metabolites <- as.data.frame (scale (Y.metabolites.heatmap.zscore))
+z_score_Y.metabolites
+```
+
+#Data Wrangling for predictors and response
+
+```{r}
+data.metabolites.combined <- cbind (covariates, Y.Metabolites)
+data.metabolites.combined
+```
+
+# Function Univariate Linear Model
+
+```{r}
+linear_model <- function (y) {
+  m1 <- lm (y ~ data.metabolites.combined$Sex + data.metabolites.combined$`Weight` + data.metabolites.combined$`Age` + data.metabolites.combined$Breed)
+  return (m1)
+}
+```
+
+# Function Univariate Linear Model Test
+
+```{r}
+x <- summary (linear_model (data.metabolites.combined$`N-acetyl-2-aminoadipate`))
+x
+```
+
+# Function Univariate Linear Apply to entire Data Frame and Pull Results
+
+```{r}
+models <- lapply(data.metabolites.combined[, 12:521], linear_model)
+summary <- lapply(models, summary)
+master_matrix <- as.data.frame(do.call(rbind, summary))  
+models_coeficients<- as.data.frame(master_matrix$coefficients)
+models_coeficients
+```
+
+# Function Univariate Linear F.statistic, p_value and FDR calculation
+
+```{r}
+f_statistic <- as.data.frame(t(as.data.frame((master_matrix$fstatistic))))
+f_statistic
+p <- pf(f_statistic$value, f_statistic$numdf, f_statistic$dendf, lower.tail = F)
+attributes (p) <- NULL
+head(p)
+
+fdr.linear.model.main.effects <- f_statistic %>% mutate (p_value = p) 
+fdr.linear.model.main.effects <- fdr.linear.model.main.effects %>% mutate (fdr = p.adjust(fdr.linear.model.main.effects$p_value, method = "fdr")) %>% mutate (Metabolite = colnames(Y.Metabolites)[-1], .before = "value")
+fdr.linear.model.main.effects
+```
+
+```{r}
+library (openxlsx)
+write.xlsx(fdr.linear.model.main.effects, file = "fdr.linear.model.main.effects.xlsx")
+```
+
+# FDR Metabolite Prioritization
+
+```{r}
+library(tidyverse)
+fdr.linear.model.main.effects.0.25 <- fdr.linear.model.main.effects %>% filter (fdr < 0.25) %>% rownames_to_column("metabolite")
+fdr.linear.model.main.effects.0.25 
+```
+
+```{r}
+fdr.linear.model.main.effects.0.1 <- fdr.linear.model.main.effects %>% filter (fdr < 0.1)
+fdr.linear.model.main.effects.0.1
+
+fdr.linear.model.main.effects.0.05 <- fdr.linear.model.main.effects %>% filter (fdr < 0.05)
+fdr.linear.model.main.effects.0.05
+```
+
+# Heatmaps prioritization 
+
+```{r}
+z_score_Y.metabolites <- z_score_Y.metabolites %>% mutate (Metabolite = colnames(Y.Metabolites)[-1], .before = "PURD.00075")
+z_score_Y.metabolites
+```
+
+```{r}
+heatmap.significant.genes.fdr.model <- z_score_Y.metabolites %>% filter (z_score_Y.metabolites$Metabolite %in% fdr.linear.model.main.effects.0.05$Metabolite)
+heatmap.significant.genes.fdr.model
+```
+```{r fig.width=8, fig.height=8, fig.fullwidth=TRUE, results="hide", echo=FALSE}
+library (pheatmap)
+heatmap.significant.genes.fdr.model.table <- column_to_rownames(heatmap.significant.genes.fdr.model, var = "Metabolite")
+heatmap.significant.genes.fdr.model.table
+pheatmap (t(heatmap.significant.genes.fdr.model.table), scale = "row", main = "Metabolites", cellwidth = 8)
+```
+
+
+```{r}
+library (ComplexHeatmap)
+ha = HeatmapAnnotation(sex=covariates$Sex, breed = covariates$Breed, age = covariates$Age, weight = covariates$Weight, col = list (sex=c("Female"="orange", "Male"="blue"), breed=c("Cross bred" = "green", "Dorset" = "yellow", "Hampshire" = "black", "Ramboilette" = "turquoise" ), foo1 = runif(10), foo2 = runif (10)))
+```
+
+```{r fig.width= 10, fig.height=6, results="hide", echo=FALSE}
+library (circlize)
+set.seed (1234)
+f2 = colorRamp2(seq(min (heatmap.significant.genes.fdr.model.table), max(heatmap.significant.genes.fdr.model.table), length = 3), c("blue", "#EEEEEE", "red"), space = "RGB")
+complex.heatmap_symbol <- Heatmap (heatmap.significant.genes.fdr.model.table, top_annotation = ha, height = unit(40, "mm"), width = unit(140, "mm"))
+complex.heatmap_symbol
+ #col = f2
+```
+
+```{r}
+pdf ("complex.heatmap_symbol.pdf", width =10, height = 6)
+complex.heatmap_symbol
+dev.off
+```
+
+
+# Per Coefficient tables
+
+```{r}
+estimate.table <- (dplyr::select(models_coeficients, ends_with("Estimate")))
+estimate.table <- as.data.frame (t(estimate.table)) %>% mutate (Metabolite = colnames(Y.Metabolites)[-1], .before = "(Intercept)")
+estimate.table 
+```
+
+```{r}
+library (openxlsx)
+write.xlsx(estimate.table, file = "estimate.table.main.effects.xlsx")
+```
+
+
+```{r}
+standard_error.table <- (dplyr::select(models_coeficients, ends_with("Error")))
+standard_error.table <- as.data.frame (t(standard_error.table))%>% mutate (Metabolites = colnames(Y.Metabolites)[-1], .before = "(Intercept)")
+standard_error.table
+```
+
+
+```{r}
+library (openxlsx)
+write.xlsx(standard_error.table, file = "standard_error.table.main.effects.xlsx")
+```
+
+```{r}
+t_stat.table <- (dplyr::select(models_coeficients, ends_with("t.value")))
+t_stat.table <- as.data.frame (t(t_stat.table))
+t_stat.table <- t_stat.table %>%mutate (Metabolites = colnames(Y.Metabolites)[-1], .before = "(Intercept)") %>% rownames_to_column("description") 
+t_stat.table
+```
+
+```{r}
+library (openxlsx)
+write.xlsx(t_stat.table, file = "t_stat.table.main.effects.xlsx")
+```
+
+
+# This table will prioritize the metabolites by covariate - Wald Test
+
+```{r}
+p_value.table <- (dplyr::select(models_coeficients, ends_with("Pr...t..")))
+p_value.table <- as.data.frame (t(p_value.table))%>% mutate (Metabolites = colnames(Y.Metabolites)[-1], .before = "(Intercept)")
+p_value.table 
+```
+
+```{r}
+library (openxlsx)
+write.xlsx(p_value.table, file = "p_value.table.main.effects.xlsx")
+```
+
+```{r}
+p.value.metabolites.sexmale.main.effects <- p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$SexMale` < 0.05)
+p.value.metabolites.sexmale.main.effects
+p.value.metabolites.weight.main.effects <- p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$Weight` < 0.05)
+p.value.metabolites.weight.main.effects
+p.value.metabolites.age.main.effects <- p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$Age` < 0.05)
+p.value.metabolites.age.main.effects
+p.value.metabolites.breed.dorset.main.effects <- p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$BreedDorset` < 0.05)
+p.value.metabolites.breed.dorset.main.effects
+p.value.metabolites.breed.hampshire.main.effects <- p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$BreedHampshire` < 0.05)
+p.value.metabolites.breed.hampshire.main.effects
+p.value.metabolites.breed.ramboilette.main.effects <- p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$BreedRamboilette`< 0.05)
+p.value.metabolites.breed.ramboilette.main.effects
+```
+
+# Export-tables
+
+```{r}
+library (openxlsx)
+write.xlsx(p.value.metabolites.sexmale.main.effects, file = "p.value.metabolites.sexmale.main.effects.xlsx")
+write.xlsx(p.value.metabolites.weight.main.effects, file = "p.value.metabolites.weight.main.effects.xlsx")
+write.xlsx(p.value.metabolites.age.main.effects, file = "p.value.metabolites.age.main.effects.xlsx")
+write.xlsx(p.value.metabolites.breed.dorset.main.effects, file = "p.value.metabolites.breed.dorset.main.effects.xlsx")
+write.xlsx(p.value.metabolites.breed.hampshire.main.effects, file = "p.value.metabolites.breed.hampshire.main.effects.xlsx")
+write.xlsx(p.value.metabolites.breed.ramboilette.main.effects, file = "p.value.metabolites.breed.ramboilette.main.effects.xlsx") 
+```
+
+
+################################################################################
+
+# Pairwise Interactions Effects
+
+################################################################################
+
+```{r}
+linear_interactions_model <- function (y) {
+  m2 <- lm (y ~ data.metabolites.combined$Sex + data.metabolites.combined$`Weight` + data.metabolites.combined$`Age` + data.metabolites.combined$Breed + data.metabolites.combined$Sex*data.metabolites.combined$`Weight` + data.metabolites.combined$Sex*data.metabolites.combined$`Age` + data.metabolites.combined$Sex*data.metabolites.combined$Breed + data.metabolites.combined$Weight*data.metabolites.combined$`Age` + data.metabolites.combined$Weight*data.metabolites.combined$`Breed` + data.metabolites.combined$Age*data.metabolites.combined$Breed)
+  return (m2)
+}
+```
+
+# Function Univariate Linear Model Test
+
+```{r}
+x <- summary (linear_interactions_model (data.metabolites.combined$`(3'-5')-uridylylcytidine*`))
+x
+```
+
+# Function Univariate Linear Apply to entire Data Frame and Pull Results
+
+```{r}
+models <- lapply(data.metabolites.combined[, 12:521], linear_interactions_model)
+summary <- lapply(models, summary)
+master_matrix <- as.data.frame(do.call(rbind, summary))  
+models_coeficients<- as.data.frame(master_matrix$coefficients)
+models_coeficients
+```
+
+# Function Univariate Linear F.statistic pvalue and FDR calculation
+
+```{r}
+f_statistic <- as.data.frame(t(as.data.frame((master_matrix$fstatistic))))
+f_statistic
+
+p <- pf(f_statistic$value, f_statistic$numdf, f_statistic$dendf, lower.tail = F)
+attributes (p) <- NULL
+head(p)
+
+fdr.linear.model.interaction.effects <- f_statistic %>% mutate (p_value = p) 
+fdr.linear.model.interaction.effects <- fdr.linear.model.interaction.effects %>% mutate (fdr = p.adjust(fdr.linear.model.interaction.effects$p_value, method = "fdr")) %>% mutate (Metabolite = colnames(Y.Metabolites)[-1], .before = "value")
+fdr.linear.model.interaction.effects
+```
+
+
+```{r}
+library (openxlsx)
+write.xlsx(fdr.linear.model.interaction.effects, file = "fdr.linear.model.interaction.effects.xlsx")
+```
+
+# FDR Metabolite Prioritization
+
+```{r}
+library(tidyverse)
+fdr.linear.model.interaction.effects.0.25 <- fdr.linear.model.interaction.effects %>% filter (fdr < 0.25) %>% rownames_to_column("metabolite")
+fdr.linear.model.interaction.effects.0.25
+```
+
+```{r}
+fdr.linear.model.interaction.effects.0.1 <- fdr.linear.model.interaction.effects %>% filter (fdr < 0.1)
+fdr.linear.model.interaction.effects.0.1
+
+fdr.linear.model.interaction.effects.0.05 <- fdr.linear.model.interaction.effects %>% filter (fdr < 0.05)
+fdr.linear.model.interaction.effects.0.05
+```
+
+# Heatmaps prioritization 
+
+```{r}
+heatmap.significant.genes.fdr.model.interactions <- z_score_Y.metabolites %>% filter (z_score_Y.metabolites$Metabolite %in% fdr.linear.model.interaction.effects.0.05$Metabolite)
+heatmap.significant.genes.fdr.model.interactions
+```
+
+```{r}
+heatmap.significant.genes.fdr.model.interactions.table <- column_to_rownames(heatmap.significant.genes.fdr.model.interactions, var = "Metabolite")
+heatmap.significant.genes.fdr.model.interactions.table
+```
+
+```{r fig.width= 10, fig.height=10, results="hide", echo=FALSE}
+library (pheatmap)
+pheatmap ((heatmap.significant.genes.fdr.model.interactions.table), scale = "row", main = "Metabolites", cellwidth = 6)
+```
+
+
+```{r}
+library (ComplexHeatmap)
+ha = HeatmapAnnotation(sex=covariates$Sex, breed = covariates$Breed, age= covariates$Age, weight = covariates$Weight, col = list (sex=c("Female"="orange", "Male"="blue"), breed=c("Cross bred" = "green", "Dorset" = "yellow", "Hampshire" = "black", "Ramboilette" = "turquoise" ), foo1 = runif(10), foo2 = runif (10)))
+```
+
+```{r fig.width= 10, fig.height=6, results="hide", echo=FALSE}
+library (circlize)
+set.seed (1234)
+f2 <- colorRamp2(
+  c(min(heatmap.significant.genes.fdr.model.interactions.table), 0, max(heatmap.significant.genes.fdr.model.interactions.table)), 
+  c("blue", "#EEEEEE", "red"), 
+  space = "RGB"
+)
+complex.heatmap_symbol.interactions <- Heatmap (heatmap.significant.genes.fdr.model.interactions.table, top_annotation = ha, height = unit(100, "mm"), width = unit(100, "mm"), col = f2)
+complex.heatmap_symbol.interactions
+#col = f2
+```
+
+```{r}
+pdf ("complex.heatmap_symbol.interactions.pdf", width =12, height = 8)
+complex.heatmap_symbol.interactions
+dev.off
+```
+
+
+# Per Coefficient tables
+
+```{r}
+estimate.table <- (dplyr::select(models_coeficients, ends_with("Estimate")))
+estimate.table <- as.data.frame (t(estimate.table)) %>% mutate (Metabolite = colnames(Y.Metabolites)[-1], .before = "(Intercept)")
+estimate.table 
+```
+
+```{r}
+library (openxlsx)
+write.xlsx(estimate.table, file = "estimate.table.interaction.effects.xlsx")
+```
+
+```{r}
+standard_error.table <- (dplyr::select(models_coeficients, ends_with("Error")))
+standard_error.table <- as.data.frame (t(standard_error.table))%>% mutate (Metabolites = colnames(Y.Metabolites)[-1], .before = "(Intercept)")
+standard_error.table
+```
+
+```{r}
+library (openxlsx)
+write.xlsx(standard_error.table, file = "standard_error.table.interaction.effects.xlsx")
+```
+
+```{r}
+t_stat.table <- (dplyr::select(models_coeficients, ends_with("t.value")))
+t_stat.table <- as.data.frame (t(t_stat.table))
+t_stat.table <- t_stat.table %>%mutate (Metabolites = colnames(Y.Metabolites)[-1], .before = "(Intercept)") %>% rownames_to_column("description") 
+t_stat.table
+```
+
+```{r}
+library (openxlsx)
+write.xlsx(t_stat.table, file = "t_stat.table.interaction.effects.xlsx")
+```
+
+# This table will prioritiza the metabolites by covariate - Wald Test
+
+```{r}
+p_value.table <- (dplyr::select(models_coeficients, ends_with("Pr...t..")))
+p_value.table <- as.data.frame (t(p_value.table))%>% mutate (Metabolites = colnames(Y.Metabolites)[-1], .before = "(Intercept)")
+p_value.table 
+```
+
+```{r}
+library (openxlsx)
+write.xlsx(p_value.table, file = "p_value.table.interaction.effects.xlsx")
+```
+# Export-tables
+
+```{r}
+p.value.metabolites.sexmale.interaction.effects <- p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$SexMale` < 0.05)
+p.value.metabolites.sexmale.interaction.effects
+p.value.metabolites.weight.interaction.effects <- p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$Weight` < 0.05)
+p.value.metabolites.weight.interaction.effects
+p.value.metabolites.age.interaction.effects <-p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$Age` < 0.05)
+p.value.metabolites.age.interaction.effects
+p.value.metabolites.breed.dorset.interaction.effects <-p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$BreedDorset` < 0.05)
+p.value.metabolites.breed.dorset.interaction.effects
+p.value.metabolites.breed.hampshire.interaction.effects <-p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$BreedHampshire` < 0.05)
+p.value.metabolites.breed.hampshire.interaction.effects
+p.value.metabolites.breed.ramboilette.interaction.effects <-p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$BreedRamboilette`< 0.05)
+p.value.metabolites.breed.ramboilette.interaction.effects
+
+p.value.metabolites.sexmale.weight.interaction.effects <-p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$SexMale:data.metabolites.combined$Weight` < 0.05)
+p.value.metabolites.sexmale.weight.interaction.effects
+
+p.value.metabolites.sexmale.age.interaction.effects <-p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$SexMale:data.metabolites.combined$Age` < 0.05)
+p.value.metabolites.sexmale.age.interaction.effects
+
+p.value.metabolites.sexmale.breed.dorset.interaction.effects <-p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$SexMale:data.metabolites.combined$BreedDorset` < 0.05)
+p.value.metabolites.sexmale.breed.dorset.interaction.effects
+
+
+
+p.value.metabolites.weight.age.interaction.effects <-p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$Weight:data.metabolites.combined$Age`< 0.05)
+p.value.metabolites.weight.age.interaction.effects
+p.value.metabolites.weight.breed.dorset.interaction.effects <-p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$Weight:data.metabolites.combined$BreedDorset`< 0.05)
+p.value.metabolites.weight.breed.dorset.interaction.effects
+
+p.value.metabolites.weight.breed.hampshire.interaction.effects <-p_value.table %>% dplyr::filter (p_value.table$`data.metabolites.combined$Weight:data.metabolites.combined$BreedHampshire`< 0.05)
+p.value.metabolites.weight.breed.hampshire.interaction.effects
+```
+
+
+```{r}
+library (openxlsx)
+write.xlsx(p.value.metabolites.sexmale.interaction.effects, file = "p.value.metabolites.sexmale.interaction.effects.xlsx")
+write.xlsx(p.value.metabolites.weight.interaction.effects, file = "p.value.metabolites.weight.interaction.effects.xlsx")
+write.xlsx(p.value.metabolites.age.interaction.effects, file = "p.value.metabolites.age.interaction.effects.xlsx")
+write.xlsx(p.value.metabolites.breed.dorset.interaction.effects, file = "p.value.metabolites.breed.dorset.interaction.effects.xlsx")
+write.xlsx(p.value.metabolites.breed.hampshire.interaction.effects, file = "p.value.metabolites.breed.hampshire.interaction.effects.xlsx")
+write.xlsx(p.value.metabolites.breed.ramboilette.interaction.effects, file = "p.value.metabolites.breed.ramboilette.interaction.effects.xlsx") 
+
+write.xlsx(p.value.metabolites.sexmale.weight.interaction.effects, file = "p.value.metabolites.sexmale.weight.interaction.effects.xlsx")
+write.xlsx(p.value.metabolites.weight.breed.dorset.interaction.effects, file = "p.value.metabolites.weight.breed.dorset.interaction.effects.xlsx")
+write.xlsx(p.value.metabolites.sexmale.breed.dorset.interaction.effects, file = "p.value.metabolites.sexmale.breed.dorset.interaction.effects.xlsx")
+
+
+write.xlsx(p.value.metabolites.weight.age.interaction.effects, file = "p.value.metabolites.weight.age.interaction.effects.xlsx")
+write.xlsx(p.value.metabolites.weight.breed.dorset.interaction.effects, file = "p.value.metabolites.weight.breed.dorset.interaction.effects.xlsx")
+write.xlsx(p.value.metabolites.weight.breed.hampshire.interaction.effects, file = "p.value.metabolites.weight.breed.hampshire.interaction.effects.xlsx") 
+```
+
+```{r}
+sessionInfo()
+```

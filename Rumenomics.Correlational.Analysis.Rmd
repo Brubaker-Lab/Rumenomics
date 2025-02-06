@@ -1,0 +1,171 @@
+---
+title: "Correlation.Analysis Rumenomics Article"
+author: "Rumenomics Team"
+date: "2023-01-13"
+output: ''
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load Libraries
+
+```{r Package Import}
+suppressWarnings(library (ggplot2, verbose = FALSE))
+suppressWarnings(library (readxl, verbose = FALSE))
+suppressWarnings(library (viridisLite, verbose = FALSE))
+suppressWarnings(library (pheatmap, verbose = FALSE))
+suppressWarnings(library (mixOmics, verbose = FALSE))
+suppressWarnings(library(tidyverse, verbose = FALSE))
+suppressWarnings(library(magrittr, verbose = FALSE))
+suppressWarnings(library (dplyr, verbose = FALSE))
+suppressWarnings(library (MASS, verbose = FALSE))
+suppressWarnings(library (lattice, verbose = FALSE))
+```
+
+################################################################################
+
+# Main Interactions Effects
+
+################################################################################
+
+```{r}
+## Suplemental Material 1 Metabolite feature metadata (8848 rows x 7 columns)
+
+data_file <- "~/Documents/PURDUE/PURDUE UNIVERSITY/17.-Projects/4.Rumenomics_Paper/3.Rumenomics.R.Workbook/7.Correlation.Analysis/Data_Metabolites.xlsx"
+if(file.exists(data_file)){
+    covariates <- read_excel(path = data_file, sheet = 1)
+} else {
+  print("Supplementary Dataset 1- Metabolite feature metadata.xlsx.  Check the location of the file relative to your Rmd file.")
+}
+covariates
+```
+
+```{r}
+## Suplemental Material 1 Metabolite feature metadata (8848 rows x 7 columns)
+
+data_file <- "~/Documents/PURDUE/PURDUE UNIVERSITY/17.-Projects/4.Rumenomics_Paper/3.Rumenomics.R.Workbook/7.Correlation.Analysis/Data_Metabolites.xlsx"
+if(file.exists(data_file)){
+    Y.Metabolites <- read_excel(path = data_file, sheet = 3)
+} else {
+  print("Supplementary Dataset 1- Metabolite feature metadata.xlsx.  Check the location of the file relative to your Rmd file.")
+}
+ Y.Metabolites
+```
+```{r}
+## Suplemental Material 1 Metabolite feature metadata (8848 rows x 7 columns)
+
+data_file <- "~/Documents/PURDUE/PURDUE UNIVERSITY/17.-Projects/4.Rumenomics_Paper/3.Rumenomics.R.Workbook/7.Correlation.Analysis/fdr.linear.model.fixed.interaction.effects.xlsx"
+if(file.exists(data_file)){
+    fdr.linear.model.interaction.effects <- read_excel(path = data_file, sheet = 1)
+} else {
+  print("Supplementary Dataset 1- Metabolite feature metadata.xlsx.  Check the location of the file relative to your Rmd file.")
+}
+fdr.linear.model.interaction.effects
+```
+
+```{r}
+metabolites.0.25 <- fdr.linear.model.interaction.effects %>% filter(fdr<0.25)
+metabolites.0.25
+```
+
+```{r}
+interaction.correlation.0.25 <- Y.Metabolites %>% select (metabolites.0.25$metabolite)
+interaction.correlation.0.25
+```
+
+# Plot Heatmaps of Interactions:
+
+```{r CD flattenCorrMatrix}
+library("Hmisc")
+# ++++++++++++++++++++++++++++
+# flattenCorrMatrix
+# ++++++++++++++++++++++++++++
+# cormat : matrix of the correlation coefficients
+# pmat : matrix of the correlation p-values
+flattenCorrMatrix <- function(cormat, pmat) {
+  ut <- upper.tri(cormat)
+  data.frame(
+    row = rownames(cormat)[row(cormat)[ut]],
+    column = rownames(cormat)[col(cormat)[ut]],
+    cor  =(cormat)[ut],
+    p = pmat[ut]
+    )
+}
+```
+
+```{r}
+interaction.correlation.0.25.outcome<- rcorr(as.matrix(interaction.correlation.0.25 ), type = c("spearman"))
+interaction.correlation.0.25.outcome
+interaction.correlation.0.25.outcome.table <- flattenCorrMatrix(interaction.correlation.0.25.outcome$r, interaction.correlation.0.25.outcome$P)
+interaction.correlation.0.25.outcome.table
+```
+
+```{r}
+res2.interaction.correlation.0.25.outcome.table <- data.frame(interaction.correlation.0.25.outcome$r)
+res2.interaction.correlation.0.25.outcome.table
+```
+
+```{r}
+res2.interaction.correlation.0.25.outcome.table
+```
+```{r fig.width=10, fig.height=10}
+pheatmap(res2.interaction.correlation.0.25.outcome.table)
+```
+
+```{r}
+cormat <- round(cor(interaction.correlation.0.25),2)
+cormat
+```
+
+```{r}
+lower_tri <- cormat
+lower_tri[lower.tri(lower_tri)] <- NA #OR upper.tri function
+lower_tri
+```
+
+```{r fig.width=20, fig.height=20, fig.fullwidth=TRUE, dpi = 350, eval=FALSE}
+ melted_cormat <- reshape2::melt(lower_tri, na.rm = TRUE)
+ # Heatmap
+ ggplot(data = melted_cormat, aes(Var2, Var1, fill = value))+
+   geom_tile(color = "white")+
+   scale_fill_gradient2(low = "blue", high = "red", mid = "white", 
+                        midpoint = 0, limit = c(-1,1), space = "Lab", 
+                        name="Pearson\nCorrelation") +
+   theme_minimal()+ 
+   theme(axis.text.x = element_text(angle = 45, vjust = 1, 
+                                    size = 1, hjust = 1))+
+   coord_fixed() +
+   geom_text(aes(Var2, Var1, label = value), color = "black", size = 4) +
+   theme(
+     axis.title.x = element_blank(),
+     axis.title.y = element_blank(),
+     panel.grid.major = element_blank(),
+     panel.border = element_blank(),
+     panel.background = element_blank(),
+     axis.ticks = element_blank(),
+     legend.justification = c(1, 0),
+     legend.position = c(0.6, 0.7),
+     legend.direction = "horizontal")+
+   guides(fill = guide_colorbar(barwidth = 7, barheight = 1,
+                                title.position = "top", title.hjust = 0.5))
+```
+
+```{r fig.width=10, fig.height=10}
+library(ggcorrplot)
+pdf ("cormat.heatmap.pdf", width =10, height = 10)
+ggcorrplot(cormat)
+dev.off
+```
+
+```{r fig.width=25, fig.height=25}
+#pdf ("cormat.heatmap.pdf", width =10, height = 10)
+ggcorrplot(cormat, hc.order = TRUE, outline.col = "white",  type = "lower") + theme(
+    axis.text.x = element_text(angle = 90))
+#dev.off
+```
+
+```{r}
+sessionInfo()
+```

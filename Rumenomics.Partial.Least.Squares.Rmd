@@ -1,0 +1,1090 @@
+---
+title: "PLS for Rumenomics Paper"
+author: "Rumenomics Team"
+date: "2023-01-13"
+output: ''
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load Libraries
+
+```{r Package Import}
+suppressWarnings(library (ggplot2, verbose = FALSE))
+suppressWarnings(library (readxl, verbose = FALSE))
+suppressWarnings(library (viridisLite, verbose = FALSE))
+suppressWarnings(library (pheatmap, verbose = FALSE))
+suppressWarnings(library (mixOmics, verbose = FALSE))
+suppressWarnings(library(tidyverse, verbose = FALSE))
+suppressWarnings(library(magrittr, verbose = FALSE))
+suppressWarnings(library (dplyr, verbose = FALSE))
+suppressWarnings(library (MASS, verbose = FALSE))
+suppressWarnings(library (lattice, verbose = FALSE))
+```
+
+
+######################################################################################
+
+# PLS number index
+
+######################################################################################
+
+```{r}
+## Suplemental Material 1 Metabolite feature metadata (8848 rows x 7 columns)
+
+data_file <- "~/Documents/PURDUE/PURDUE UNIVERSITY/17.-Projects/4.Rumenomics_Paper/3.Rumenomics.R.Workbook/2.PLS.Analysis/Data_Metabolites.xlsx"
+if(file.exists(data_file)){
+    covariates <- read_excel(path = data_file, sheet = 1)
+} else {
+  print("Supplementary Dataset 1- Metabolite feature metadata.xlsx.  Check the location of the file relative to your Rmd file.")
+}
+covariates
+```
+
+
+```{r}
+## Suplemental Material 1 Metabolite feature metadata (8848 rows x 7 columns)
+
+data_file <- "~/Documents/PURDUE/PURDUE UNIVERSITY/17.-Projects/4.Rumenomics_Paper/3.Rumenomics.R.Workbook/2.PLS.Analysis/Data_Metabolites.xlsx"
+if(file.exists(data_file)){
+    metabolites <- read_excel(path = data_file, sheet = 3)
+} else {
+  print("Supplementary Dataset 1- Metabolite feature metadata.xlsx.  Check the location of the file relative to your Rmd file.")
+}
+metabolites
+metabolites.x <- metabolites [-1]
+metabolites.x
+```
+
+######################################################################################
+
+# Metabolites sPLSDA: Metabolites x Sex
+
+######################################################################################
+
+```{r}
+metabolites.x.sex <-  metabolites.x[1:9, ]
+metabolites.x.sex
+```
+
+```{r}
+Y.sex <- covariates$Sex[1:9]
+Y.sex
+```
+
+```{r}
+MyResult.plsda.metabolites.sex <- plsda (metabolites.x.sex, Y.sex, ncomp=3)
+plotIndiv (MyResult.plsda.metabolites.sex, legend = TRUE, group = Y.sex, title = 'sPLS-DA metabolites on sex', ind.names = FALSE, res.space = "XY-variate")
+
+plotIndiv(MyResult.plsda.metabolites.sex, ind.names = FALSE, legend=TRUE,
+          ellipse = TRUE, star = F, title = 'sPLS-DA metabolites on sex',
+          X.label = 'PLS-DA 1', Y.label = 'PLS-DA 2')
+
+auc.plsda <- auroc (MyResult.plsda.metabolites.sex)
+```
+```{r CD - Microbiota sPLSDA 16}
+pdf("plot.plsda.loadings.metabolites.sex.LV1.pdf", width = 10, height = 14)
+selectVar(MyResult.plsda.metabolites.sex, comp = 1)$value
+plotLoadings(MyResult.plsda.metabolites.sex, comp = 1)
+dev.off()
+
+pdf("plot.plsda.loadings.metabolites.sex.LV2.pdf", width = 10, height = 14)
+selectVar(MyResult.plsda.metabolites.sex, comp = 2)$value
+plotLoadings(MyResult.plsda.metabolites.sex, comp = 2)
+dev.off()
+
+pdf("plot.plsda.loadings.metabolites.sex.LV3.pdf", width = 10, height = 14)
+selectVar(MyResult.plsda.metabolites.sex, comp = 3)$value
+plotLoadings(MyResult.plsda.metabolites.sex, comp = 3)
+dev.off()
+
+pdf("plot.plsda.contrib.loadings.metabolites.sex.LV1.pdf", width = 10, height = 14)
+plotLoadings(MyResult.plsda.metabolites.sex, contrib = 'max', method = 'mean', comp = 1)
+dev.off()
+
+pdf("plot.plsda.contrib.loadings.metabolites.sex.LV2.pdf", width = 10, height = 14)
+plotLoadings(MyResult.plsda.metabolites.sex, contrib = 'max', method = 'mean', comp = 2)
+dev.off()
+
+pdf("plot.plsda.contrib.loadings.metabolites.sex.LV3.pdf", width = 10, height = 14)
+plotLoadings(MyResult.plsda.metabolites.sex, contrib = 'max', method = 'mean', comp = 3)
+dev.off()
+```
+
+```{r}
+
+```
+
+```{r CD - Metabolites sPLSDA 1}
+MyResult.splsda.metabolites.sex <- splsda (metabolites.x.sex, Y.sex, ncomp=3)
+plotIndiv (MyResult.splsda.metabolites.sex, legend = TRUE, group = Y.sex, title = 'sPLS-DA metabolites on sex', ind.names = FALSE, res.space = "XY-variate")
+
+plotIndiv(MyResult.splsda.metabolites.sex, ind.names = FALSE, legend=TRUE,
+          ellipse = TRUE, star = F, title = 'sPLS-DA metabolites on sex',
+          X.label = 'PLS-DA 1', Y.label = 'PLS-DA 2')
+
+auc.plsda <- auroc (MyResult.splsda.metabolites.sex)
+```
+```{r}
+plotLoadings(MyResult.splsda.metabolites.sex, contrib = 'max', method = 'mean', comp = 1)
+plotLoadings(MyResult.splsda.metabolites.sex, contrib = 'max', method = 'mean', comp = 2)
+```
+
+
+```{r}
+MyResult.splsda.metabolites.sex
+#plotLoadings(MyResult.splsda.metabolites.sex)
+```
+
+```{r CD - Metabolites sPLSDA 2}
+selectVar(MyResult.splsda.metabolites.sex, comp = 1)$value
+#plotLoadings(MyResult.splsda.metabolites.sex, comp = 1)
+
+selectVar(MyResult.splsda.metabolites.sex, comp = 2)$value
+#plotLoadings(MyResult.splsda.metabolites.sex, comp = 2)
+
+selectVar(MyResult.splsda.metabolites.sex, comp = 3)$value
+#plotLoadings(MyResult.splsda.metabolites.sex, comp = 3)
+```
+
+```{r CD - Metabolites sPLSDA 10 fig.width=20, fig.height=6, fig.fullwidth=TRUE, dpi = 350}
+pdf("plot.splsda.scores.metabolites.sex.pdf", width = 10, height = 8)
+plot_splsda_scores_metabolites.sex <- plotIndiv (MyResult.splsda.metabolites.sex, legend = TRUE, title = 'sPLS-DA metabolites on Sex', ind.names = FALSE, res.space = "XY-variate", group = Y.sex, ellipse = TRUE)
+plot_splsda_scores_metabolites.sex
+auc.plsda <- auroc (MyResult.splsda.metabolites.sex)
+dev.off()
+```
+
+
+```{r CD - Metabolites sPLSDA 3}
+set.seed(356) # for reproducbility in this vignette, otherwise increase nrepeat
+MyPerf.splsda.sex <- perf(MyResult.splsda.metabolites.sex, validation = "Mfold", folds = 5, 
+                  progressBar = FALSE, nrepeat = 50) # we suggest nrepeat = 50
+MyPerf.splsda.sex
+plot(MyPerf.splsda.sex, col = color.mixo(5:7), sd = TRUE, legend.position = "horizontal")
+```
+```{r}
+pdf("plot.MyPerf.splsda.metabolites.sex.pdf", width = 10, height = 8)
+plot(MyPerf.splsda.sex, col = color.mixo(5:7), sd = TRUE, legend.position = "horizontal")
+dev.off()
+```
+
+```{r CD - Metabolites sPLSDA 4}
+list.keepX <- c(1:10,  seq(10, 100, 10))
+list.keepX # to output the grid of values tested
+```
+
+```{r CD - Metabolites sPLSDA 5 Fine Tune}
+#set.seed(40) # for reproducbility in this vignette, otherwise increase nrepeat
+#tune.splsda.controlvssex <- tune.splsda(metabolites.x.sex, Y.sex, ncomp = 3, # we suggest, e.g. 4
+#                                validation = 'Mfold',folds = 3, dist = 'max.dist', progressBar = TRUE,
+#                                measure = "BER", test.keepX = list.keepX, nrepeat = 25, cpus = 2)   # suggest nrepeat = 50
+#saveRDS(tune.splsda.controlvssex, file="tune.splsda.controlvssex.RDS")
+```
+
+```{r CD - Metabolites sPLSDA 6 Fine Tune}
+tune.splsda.controlvssex =  readRDS(file = "tune.splsda.controlvssex.RDS")
+error <- tune.splsda.controlvssex$error.rate
+ncomp <- tune.splsda.controlvssex$choice.ncomp$ncomp # optimal number of components based on t-tests on the error rate
+ncomp
+```
+
+```{r CD - Metabolites sPLSDA 7 Fine Tune}
+select.keepX <- tune.splsda.controlvssex$choice.keepX[1:3]  # optimal number of variables to select
+select.keepX
+```
+
+```{r CD - Metabolites sPLSDA 8}
+plot(tune.splsda.controlvssex, col = color.jet(3))
+```
+
+```{r}
+pdf("plot.splsda.tune.controlvssex.metabolites.pdf", width = 10, height = 8)
+plot(tune.splsda.controlvssex, col = color.jet(3))
+dev.off()
+```
+
+```{r CD - Metabolites sPLSDA 9 - fig.width=8, fig.height=6, fig.fullwidth=TRUE, dpi = 350}
+MyResult.splsda.metabolites.sex.final <- splsda(metabolites.x.sex, Y.sex, ncomp = 3, keepX = select.keepX)
+MyResult.splsda.metabolites.sex.final
+
+plotIndiv (MyResult.splsda.metabolites.sex.final, legend = TRUE, title = 'sPLS-DA metabolites on Sex', ind.names = FALSE, res.space = "XY-variate", group = Y.sex, ellipse = TRUE)
+
+plotIndiv(MyResult.splsda.metabolites.sex.final, ind.names = TRUE, legend=TRUE,
+          ellipse = TRUE, star = TRUE, title = 'sPLS-DA metabolites on Sex',
+          X.label = 'PLS-DA 1', Y.label = 'PLS-DA 2')
+```
+
+```{r}
+matrix <- as.data.frame (MyResult.splsda.metabolites.sex.final$variates$X)
+matrix
+```
+```{r}
+library (ggrepel)
+pdf("plot.splsda.scores.metabolites.sex.pdf", width = 5, height = 4)
+#ggplot (matrix, aes ((comp1), (comp2))) + geom_point(aes(colour = "#E69F00")) + theme_bw()  + geom_text_repel (aes (comp1, comp2, label = covariates$Sex [1:9], colour = covariates$Sex[1:9]))
+ggplot (matrix, aes ((comp1), (comp2))) + geom_point(size =4, aes(colour = covariates$Sex [1:9])) + theme_bw()  #+ geom_text_repel (aes (comp1, comp2, label = covariates$Sex [1:9], colour = covariates$Sex[1:9]))
+dev.off()
+```
+
+
+```{r CD - Metabolites sPLSDA 10 fig.width=20, fig.height=6, fig.fullwidth=TRUE, dpi = 350}
+pdf("plot.splsda.scores.metabolites.sex.final.pdf", width = 10, height = 8)
+plot_splsda_scores_metabolites <- plotIndiv (MyResult.splsda.metabolites.sex.final, legend = TRUE, title = 'sPLS-DA metabolites on Sex', ind.names = FALSE, res.space = "XY-variate", group = Y.sex, ellipse = TRUE)
+plot_splsda_scores_metabolites
+dev.off()
+```
+
+```{r CD - Metabolites sPLSDA 13 AUC}
+pdf("plot.splsda.auc.metabolites.sex.final.pdf", width = 10, height = 8)
+auc.plsda <- auroc (MyResult.splsda.metabolites.sex.final)
+dev.off()
+```
+
+```{r CD - Metabolites sPLSDA 13 Explained Variance}
+explained_variance(MyResult.splsda.metabolites.sex.final$X, MyResult.splsda.metabolites.sex.final$variates$X, ncomp=3)
+```
+
+```{r fig.width=8, fig.height=8, fig.fullwidth=TRUE, dpi = 350}
+selectVar(MyResult.splsda.metabolites.sex.final, comp = 1)$value
+#plotLoadings(MyResult.splsda.metabolites.sex.final, comp = 1)
+
+selectVar(MyResult.splsda.metabolites.sex.final, comp = 2)$value
+#plotLoadings(MyResult.splsda.metabolites.sex.final, comp = 2)
+
+selectVar(MyResult.splsda.metabolites.sex.final, comp = 3)$value
+#plotLoadings(MyResult.splsda.metabolites.sex.final, comp = 3)
+
+plotLoadings(MyResult.splsda.metabolites.sex.final, contrib = 'max', method = 'mean', comp = 1)
+plotLoadings(MyResult.splsda.metabolites.sex.final, contrib = 'max', method = 'mean', comp = 2)
+#plotLoadings(MyResult.splsda.metabolites.sex.final, contrib = 'max', method = 'mean', comp = 3)
+```
+
+```{r CD - Microbiota sPLSDA 16}
+pdf("plot.splsda.loadings.metabolites.sex.LV1.final.pdf", width = 10, height = 14)
+selectVar(MyResult.splsda.metabolites.sex.final, comp = 1)$value
+plotLoadings(MyResult.splsda.metabolites.sex.final, comp = 1)
+dev.off()
+
+pdf("plot.splsda.loadings.metabolites.sex.LV2.final.pdf", width = 10, height = 14)
+selectVar(MyResult.splsda.metabolites.sex.final, comp = 2)$value
+plotLoadings(MyResult.splsda.metabolites.sex.final, comp = 2)
+dev.off()
+
+pdf("plot.splsda.loadings.metabolites.sex.LV3.final.pdf", width = 10, height = 14)
+selectVar(MyResult.splsda.metabolites.sex.final, comp = 3)$value
+plotLoadings(MyResult.splsda.metabolites.sex.final, comp = 3)
+dev.off()
+
+pdf("plot.splsda.contrib.loadings.metabolites.sex.LV1.final.pdf", width = 10, height = 14)
+plotLoadings(MyResult.splsda.metabolites.sex.final, contrib = 'max', method = 'mean', comp = 1)
+dev.off()
+
+pdf("plot.splsda.contrib.loadings.metabolites.sex.LV2.final.pdf", width = 10, height = 14)
+plotLoadings(MyResult.splsda.metabolites.sex.final, contrib = 'max', method = 'mean', comp = 2)
+dev.off()
+
+pdf("plot.splsda.contrib.loadings.metabolites.sex.LV3.final.pdf", width = 10, height = 14)
+plotLoadings(MyResult.splsda.metabolites.sex.final, contrib = 'max', method = 'mean', comp = 3)
+dev.off()
+```
+
+```{r CD - Metabolites sPLSDA 17 Loadings}
+loadings.1.metabolite.sex <- as.data.frame(selectVar(MyResult.splsda.metabolites.sex.final, comp = 1)$value)
+loadings.2.metabolite.sex <- as.data.frame(selectVar(MyResult.splsda.metabolites.sex.final, comp = 2)$value)
+loadings.3.metabolite.sex <- as.data.frame(selectVar(MyResult.splsda.metabolites.sex.final, comp = 3)$value)
+head (selectVar(MyResult.splsda.metabolites.sex.final, comp=3)$name)  
+loadings.1.metabolite.sex <- loadings.1.metabolite.sex %>% rownames_to_column(var = "name")
+loadings.1.metabolite.sex
+loadings.2.metabolite.sex <- loadings.2.metabolite.sex %>% rownames_to_column(var = "name")
+loadings.2.metabolite.sex
+loadings.3.metabolite.sex <- loadings.3.metabolite.sex %>% rownames_to_column(var = "name")
+loadings.3.metabolite.sex
+```
+
+```{r CD - Metabolites sPLSDA 18 Linn VIP}
+linn.vip.metabolites.sex <- vip(MyResult.splsda.metabolites.sex.final)
+length (linn.vip.metabolites.sex)
+head(linn.vip.metabolites.sex)
+```
+
+```{r CD - Metabolites sPLSDA 19 Variates}
+score.matrix.metabolites.sex <- MyResult.splsda.metabolites.sex.final$variates
+#head(score.matrix.metabolites.Sex)
+```
+
+```{r CD - Metabolites sPLSDA 20 Coefficients}
+coefficients.metabolites.sex <- MyResult.splsda.metabolites.sex.final[["mat.c"]]
+head(coefficients.metabolites.sex)
+length (coefficients.metabolites.sex)
+```
+```{r}
+biplot (MyResult.splsda.metabolites.sex.final, var.names.size = 4)
+pdf("plot.splsda.biplot..metabolites.sex.final.pdf", width = 15, height = 12)
+biplot (MyResult.splsda.metabolites.sex.final, var.names.size = 4)
+dev.off()
+```
+
+```{r}
+linn.vip.metabolites.sex <- as.data.frame (linn.vip.metabolites.sex) %>% rownames_to_column("Metabolites")
+linn.vip.metabolites.sex
+```
+
+```{r CD Metabolites sPLSDA 21 Printing Loadings Coefficients Scores VIP}
+library (openxlsx)
+write.xlsx(loadings.1.metabolite.sex, file = "loadings.1.metabolites.sex.xlsx")
+write.xlsx(loadings.2.metabolite.sex, file = "loadings.2.metabolites.sex.xlsx")
+write.xlsx(loadings.3.metabolite.sex, file = "loadings.3.metabolites.sex.xlsx")
+write.xlsx(linn.vip.metabolites.sex, file = "linn.vip.metabolites.sex.xlsx")
+write.xlsx(score.matrix.metabolites.sex, file = "score.matrix.metabolites.sex.xlsx")
+write.xlsx(coefficients.metabolites.sex, file = "coefficients.metabolites.sex.xlsx") 
+```
+
+```{r CD - Metabolites sPLSDA 22 Import Validation data Set}
+#VALIDATION DATA SET PERFORMANCE AND PREDICTION
+metabolites.x.sex.validation <-  metabolites.x[10:16, ]
+metabolites.x.sex.validation
+
+Y.sex.validation <- covariates$Sex[10:16]
+Y.sex.validation
+```
+
+
+```{r CD - Metabolites sPLSDA 23 Prediction}
+splsda.metabolites.sex.predict <- predict (MyResult.splsda.metabolites.sex.final, metabolites.x.sex.validation, dist = "max.dist")
+splsda.metabolites.sex.predict
+prediction.metabolites.sex <- splsda.metabolites.sex.predict$class$max.dist[,3]
+prediction.metabolites.sex
+```
+
+calculate the error rate of the model
+```{r CD - Metabolites sPLSDA 24 Error rate}
+confusion.mat.metabolites.sex = get.confusion_matrix(truth = Y.sex.validation, predicted = prediction.metabolites.sex)
+get.BER(confusion.mat.metabolites.sex)
+```
+
+```{r}
+confusion.mat.metabolites.sex
+```
+
+```{r}
+confusion.mat.metabolites.sex
+```
+
+```{r}
+prediction.metabolites.sex
+```
+
+
+```{r}
+VIP.sex <- linn.vip.metabolites.sex %>% arrange (desc (comp1))
+VIP.sex.table <- VIP.sex[1:10, ]
+VIP.sex.table
+```
+
+```{r fig.width=12, fig.height=15, fig.fullwidth=TRUE, dpi = 350}
+colVIPUC <- ggplot(VIP.sex.table, aes(x=reorder (Metabolites, - comp1), y=comp1)) + geom_col(color="darkblue", fill="#FFD54D",  width = 0.5) + theme(legend.text = element_text(colour="black", size=30)) +  theme(legend.title = element_text(colour="black", size=30)) + labs(x = "VIP", y = "VIP") + theme(axis.text=element_text(size=30), axis.title.x = element_text(size = 30)) + theme(axis.title.y = element_text(size = 30)) + theme_bw(base_size = 35) + theme(legend.position = "top") + theme(axis.text.x = element_text(angle = 90)) + coord_flip()
+colVIPUC 
+ggsave("plot.spls.sex.VIP.top10.pdf",units="in", width=30, height=30, dpi=350)
+```
+
+
+######################################################################################
+
+# Metabolites sPLSDA: Meetabolites x Breed
+
+######################################################################################
+
+```{r}
+metabolites.x.breed <-  metabolites.x[1:16, ]
+metabolites.x.breed
+```
+
+```{r}
+Y.breed <- as.factor(covariates$Breed[1:16])
+Y.breed
+is.na (Y.breed)
+```
+```{r}
+MyResult.plsda.metabolites.breed <- plsda (metabolites.x.breed, Y.breed, ncomp=3)
+plotIndiv (MyResult.plsda.metabolites.breed, legend = TRUE, group = Y.breed, title = 'sPLS-DA metabolites on breed', ind.names = FALSE, res.space = "XY-variate")
+
+plotIndiv(MyResult.plsda.metabolites.breed, ind.names = FALSE, legend=TRUE,
+          ellipse = F, star = F, title = 'sPLS-DA metabolites on breed',
+          X.label = 'PLS-DA 1', Y.label = 'PLS-DA 2')
+
+auc.plsda <- auroc (MyResult.plsda.metabolites.breed)
+```
+
+
+```{r CD - Metabolites sPLSDA 1}
+MyResult.splsda.metabolites.breed <- splsda (metabolites.x.breed, Y.breed, ncomp=3)
+plotIndiv (MyResult.splsda.metabolites.breed, legend = TRUE, group = Y.breed, title = 'sPLS-DA metabolites on breed', ind.names = FALSE, res.space = "XY-variate")
+
+plotIndiv(MyResult.splsda.metabolites.breed, ind.names = FALSE, legend=TRUE,
+          ellipse = F, star = F, title = 'sPLS-DA metabolites on breed',
+          X.label = 'PLS-DA 1', Y.label = 'PLS-DA 2')
+
+auc.plsda <- auroc (MyResult.splsda.metabolites.breed)
+```
+
+```{r CD - Metabolites sPLSDA 2}
+selectVar(MyResult.splsda.metabolites.breed, comp = 1)$value
+#plotLoadings(MyResult.splsda.metabolites.breed, comp = 1)
+
+selectVar(MyResult.splsda.metabolites.breed, comp = 2)$value
+#plotLoadings(MyResult.splsda.metabolites.breed, comp = 2)
+
+selectVar(MyResult.splsda.metabolites.breed, comp = 3)$value
+#plotLoadings(MyResult.splsda.metabolites.breed, comp = 3)
+```
+
+```{r CD - Metabolites sPLSDA 10 fig.width=20, fig.height=6, fig.fullwidth=TRUE, dpi = 350}
+pdf("plot.splsda.scores.metabolites.breed.pdf", width = 10, height = 8)
+plot_splsda_scores_metabolites.breed <- plotIndiv (MyResult.splsda.metabolites.breed, legend = TRUE, title = 'sPLS-DA metabolites on breed', ind.names = FALSE, res.space = "XY-variate", group = Y.breed, ellipse = F)
+plot_splsda_scores_metabolites.breed
+dev.off()
+```
+```{r CD - Metabolites sPLSDA 3}
+#set.seed(354) # for reproducbility in this vignette, otherwise increase nrepeat
+#MyPerf.splsda.breed <- perf(MyResult.splsda.metabolites.breed, validation = "Mfold", folds = 6, 
+#                  progressBar = FALSE, nrepeat = 10) # we suggest nrepeat = 50
+#MyPerf.splsda.breed
+#plot(MyPerf.splsda.breed, col = color.mixo(5:7), sd = TRUE, legend.position = "horizontal")
+```
+```{r}
+#pdf("plot.MyPerf.splsda.metabolites.breed.pdf", width = 10, height = 8)
+#plot(MyPerf.splsda.breed, col = color.mixo(5:7), sd = TRUE, legend.position = "horizontal")
+#dev.off()
+```
+
+```{r CD - Metabolites sPLSDA 4}
+#list.keepX <- c(1:10,  seq(10, 100, 10))
+#list.keepX # to output the grid of values tested
+```
+
+```{r CD - Metabolites sPLSDA 5 Fine Tune}
+#set.seed(40) # for reproducbility in this vignette, otherwise increase nrepeat
+#tune.splsda.controlvsbreed <- tune.splsda(metabolites.x.breed, Y.breed, ncomp = 3, # we suggest, e.g. 4
+#                                validation = 'Mfold',folds = 3, dist = 'max.dist', progressBar = TRUE,
+#                                measure = "BER", test.keepX = list.keepX, nrepeat = 25, cpus = 2)   # suggest nrepeat = 50
+#saveRDS(tune.splsda.controlvsbreed, file="tune.splsda.controlvsbreed.RDS")
+```
+
+```{r CD - Metabolites sPLSDA 6 Fine Tune}
+tune.splsda.controlvsbreed =  readRDS(file = "tune.splsda.controlvsbreed.RDS")
+error <- tune.splsda.controlvsbreed$error.rate
+ncomp <- tune.splsda.controlvsbreed$choice.ncomp$ncomp # optimal number of components based on t-tests on the error rate
+ncomp
+```
+
+```{r CD - Metabolites sPLSDA 7 Fine Tune}
+select.keepX <- tune.splsda.controlvsbreed$choice.keepX[1:3]  # optimal number of variables to select
+select.keepX
+```
+
+```{r CD - Metabolites sPLSDA 8}
+plot(tune.splsda.controlvsbreed, col = color.jet(3))
+```
+
+```{r}
+pdf("plot.splsda.tune.controlvsbreed.metabolites.pdf", width = 10, height = 8)
+plot(tune.splsda.controlvsbreed, col = color.jet(3))
+dev.off()
+```
+
+```{r CD - Metabolites sPLSDA 9 - fig.width=8, fig.height=6, fig.fullwidth=TRUE, dpi = 350}
+MyResult.splsda.metabolites.breed.final <- splsda(metabolites.x.breed, Y.breed, ncomp = 3, keepX = select.keepX)
+MyResult.splsda.metabolites.breed.final
+
+plotIndiv (MyResult.splsda.metabolites.breed.final, legend = TRUE, title = 'sPLS-DA metabolites on breed', ind.names = FALSE, res.space = "XY-variate", group = Y.breed, ellipse = F)
+
+plotIndiv(MyResult.splsda.metabolites.breed.final, ind.names = TRUE, legend=TRUE,
+          ellipse = TRUE, star = TRUE, title = 'sPLS-DA metabolites on breed',
+          X.label = 'PLS-DA 1', Y.label = 'PLS-DA 2')
+```
+```{r}
+matrix <- as.data.frame (MyResult.splsda.metabolites.breed.final$variates$X)
+matrix
+```
+
+
+```{r}
+library (ggrepel)
+pdf("plot.splsda.scores.metabolites.breed.pdf", width = 5, height = 4)
+#ggplot (matrix, aes ((comp1), (comp2))) + geom_point(aes(colour = "#E69F00")) + theme_bw()  + geom_text_repel (aes (comp1, comp2, label = covariates$Breed, colour = covariates$Breed))
+
+ggplot (matrix, aes ((comp1), (comp2))) + geom_point(size = 4, aes(color = covariates$Breed)) + theme_bw()  #+ geom_text_repel (aes (comp1, comp2, label = covariates$Breed, colour = covariates$Breed))
+dev.off()
+```
+
+```{r CD - Metabolites sPLSDA 10 fig.width=20, fig.height=6, fig.fullwidth=TRUE, dpi = 350}
+pdf("plot.splsda.scores.metabolites.breed.final.pdf", width = 10, height = 8)
+plot_splsda_scores_metabolites <- plotIndiv (MyResult.splsda.metabolites.breed.final, legend = TRUE, title = 'sPLS-DA metabolites on breed', ind.names = FALSE, res.space = "XY-variate", group = Y.breed, ellipse = F)
+plot_splsda_scores_metabolites
+dev.off()
+```
+
+```{r CD - Metabolites sPLSDA 13 AUC}
+pdf("plot.splsda.auc.metabolites.breed.pdf", width = 10, height = 8)
+auc.plsda <- auroc (MyResult.splsda.metabolites.breed)
+dev.off()
+```
+
+```{r CD - Metabolites sPLSDA 13 Explained Variance}
+explained_variance(MyResult.splsda.metabolites.breed$X, MyResult.splsda.metabolites.breed$variates$X, ncomp=3)
+```
+
+```{r fig.width=8, fig.height=8, fig.fullwidth=TRUE, dpi = 350}
+selectVar(MyResult.splsda.metabolites.breed, comp = 1)$value
+#plotLoadings(MyResult.splsda.metabolites.breed, comp = 1)
+
+selectVar(MyResult.splsda.metabolites.breed, comp = 2)$value
+#plotLoadings(MyResult.splsda.metabolites.breed, comp = 2)
+
+selectVar(MyResult.splsda.metabolites.breed, comp = 3)$value
+#plotLoadings(MyResult.splsda.metabolites.breed, comp = 3)
+
+#plotLoadings(MyResult.splsda.metabolites.breed, contrib = 'max', method = 'mean', comp = 1)
+#plotLoadings(MyResult.splsda.metabolites.breed, contrib = 'max', method = 'mean', comp = 2)
+#plotLoadings(MyResult.splsda.metabolites.breed, contrib = 'max', method = 'mean', comp = 3)
+```
+
+```{r CD - Microbiota sPLSDA 16}
+pdf("plot.splsda.loadings.metabolites.breed.LV1.final.pdf", width = 10, height = 14)
+selectVar(MyResult.splsda.metabolites.breed, comp = 1)$value
+#plotLoadings(MyResult.splsda.metabolites.breed, comp = 1)
+dev.off()
+
+pdf("plot.splsda.loadings.metabolites.breed.LV2.pdf", width = 10, height = 14)
+selectVar(MyResult.splsda.metabolites.breed, comp = 2)$value
+#plotLoadings(MyResult.splsda.metabolites.breed, comp = 2)
+dev.off()
+
+pdf("plot.splsda.loadings.metabolites.breed.LV3.pdf", width = 10, height = 14)
+selectVar(MyResult.splsda.metabolites.breed, comp = 3)$value
+#plotLoadings(MyResult.splsda.metabolites.breed, comp = 3)
+dev.off()
+
+pdf("plot.splsda.contrib.metabolites.breed.LV1.pdf", width = 10, height = 14)
+#plotLoadings(MyResult.splsda.metabolites.breed, contrib = 'max', method = 'mean', comp = 1)
+dev.off()
+
+pdf("plot.splsda.contrib.metabolites.breed.LV2.pdf", width = 10, height = 14)
+#plotLoadings(MyResult.splsda.metabolites.breed, contrib = 'max', method = 'mean', comp = 2)
+dev.off()
+
+pdf("plot.splsda.contrib.metabolites.breed.LV3.pdf", width = 10, height = 14)
+#plotLoadings(MyResult.splsda.metabolites.breed, contrib = 'max', method = 'mean', comp = 3)
+dev.off()
+```
+
+```{r CD - Metabolites sPLSDA 17 Loadings}
+loadings.1.metabolite.breed <- as.data.frame(selectVar(MyResult.splsda.metabolites.breed, comp = 1)$value)
+loadings.2.metabolite.breed <- as.data.frame(selectVar(MyResult.splsda.metabolites.breed, comp = 2)$value)
+loadings.3.metabolite.breed <- as.data.frame(selectVar(MyResult.splsda.metabolites.breed, comp = 3)$value)
+head (selectVar(MyResult.splsda.metabolites.breed, comp=3)$name)  
+loadings.1.metabolite.breed <- loadings.1.metabolite.breed %>% rownames_to_column(var = "name")
+loadings.1.metabolite.breed
+loadings.2.metabolite.breed <- loadings.2.metabolite.breed %>% rownames_to_column(var = "name")
+loadings.2.metabolite.breed
+loadings.3.metabolite.breed <- loadings.3.metabolite.breed %>% rownames_to_column(var = "name")
+loadings.3.metabolite.breed
+```
+
+```{r CD - Metabolites sPLSDA 18 Linn VIP}
+linn.vip.metabolites.breed <- vip(MyResult.splsda.metabolites.breed)
+length (linn.vip.metabolites.breed)
+head(linn.vip.metabolites.breed)
+```
+
+```{r}
+linn.vip.metabolites.breed <- as.data.frame (linn.vip.metabolites.breed) %>% rownames_to_column("Metabolites")
+linn.vip.metabolites.breed
+```
+
+```{r CD - Metabolites sPLSDA 19 Variates}
+score.matrix.metabolites.breed <- MyResult.splsda.metabolites.breed$variates
+#head(score.matrix.metabolites.breed)
+```
+
+```{r CD - Metabolites sPLSDA 20 Coefficients}
+coefficients.metabolites.breed <- MyResult.splsda.metabolites.breed[["mat.c"]]
+head(coefficients.metabolites.breed)
+length (coefficients.metabolites.breed)
+```
+```{r CD Metabolites sPLSDA 21 Printing Loadings Coefficients Scores VIP}
+library (openxlsx)
+write.xlsx(loadings.1.metabolite.breed, file = "loadings.1.metabolites.breed.xlsx")
+write.xlsx(loadings.2.metabolite.breed, file = "loadings.2.metabolites.breed.xlsx")
+write.xlsx(loadings.3.metabolite.breed, file = "loadings.3.metabolites.breed.xlsx")
+write.xlsx(linn.vip.metabolites.breed, file = "linn.vip.metabolites.breed.xlsx")
+write.xlsx(score.matrix.metabolites.breed, file = "score.matrix.metabolites.breed.xlsx")
+write.xlsx(coefficients.metabolites.breed, file = "coefficients.metabolites.breed.xlsx") 
+```
+
+
+```{r}
+biplot (MyResult.splsda.metabolites.breed, var.names.size = 4)
+pdf("plot.splsda.biplot.metabolites.breed.pdf", width = 15, height = 12)
+biplot (MyResult.splsda.metabolites.breed, var.names.size = 4)
+dev.off()
+```
+
+```{r CD - Metabolites sPLSDA 22 Import Validation data Set}
+#VALIDATION DATA SET PERFORMANCE AND PREDICTION
+metabolites.x.breed.validation <-  metabolites.x[12:16, ]
+metabolites.x.breed.validation
+
+Y.breed.validation <- covariates$Breed[12:16]
+Y.breed.validation
+```
+
+
+```{r CD - Metabolites sPLSDA 23 Prediction}
+splsda.metabolites.breed.predict <- predict (MyResult.splsda.metabolites.breed, metabolites.x.breed.validation, dist = "max.dist")
+splsda.metabolites.breed.predict
+prediction.metabolites.breed <- splsda.metabolites.breed.predict$class$max.dist[,3]
+prediction.metabolites.breed
+```
+
+calculate the error rate of the model
+```{r CD - Metabolites sPLSDA 24 Error rate}
+confusion.mat.metabolites.breed = get.confusion_matrix(truth = Y.breed.validation, predicted = prediction.metabolites.breed)
+get.BER(confusion.mat.metabolites.breed)
+```
+
+
+```{r}
+VIP.breed <- linn.vip.metabolites.breed %>% arrange (desc (comp1))
+VIP.breed.table <- VIP.breed[1:10, ]
+VIP.breed.table
+```
+
+```{r fig.width=12, fig.height=15, fig.fullwidth=TRUE, dpi = 350}
+colVIPUC <- ggplot(VIP.breed.table, aes(x=reorder (Metabolites, - comp1), y=comp1)) + geom_col(color="darkblue", fill="#FFD54D",  width = 0.5) + theme(legend.text = element_text(colour="black", size=30)) +  theme(legend.title = element_text(colour="black", size=30)) + labs(x = "VIP", y = "VIP") + theme(axis.text=element_text(size=30), axis.title.x = element_text(size = 30)) + theme(axis.title.y = element_text(size = 30)) + theme_bw(base_size = 35) + theme(legend.position = "top") + theme(axis.text.x = element_text(angle = 90)) + coord_flip()
+colVIPUC 
+ggsave("plot.spls.breed.VIP.top10.pdf",units="in", width=10, height=10, dpi=350)
+```
+
+######################################################################################
+
+# Metabolites sPLSR: Meetabolites x Weight
+
+######################################################################################
+
+
+```{r}
+metabolites.x.weight <-  metabolites.x[1:9, ]
+metabolites.x.weight
+```
+
+```{r}
+Y.weight<- covariates$Weight[1:9]
+Y.weight
+```
+
+
+```{r}
+MyResult.spls.metabolites.weight <- spls(metabolites.x.weight, Y.weight, ncomp= 3, mode = "regression")
+MyResult.spls.metabolites.weight
+plotIndiv(MyResult.spls.metabolites.weight, ind.names = FALSE, title = 'sPLS-metabolites on Weight', rep.space = "X-variate", legend = TRUE, group = Y.weight, ellipse = F)
+
+plotIndiv(MyResult.spls.metabolites.weight, ind.names = FALSE, title = 'sPLS-metabolites on Weight', rep.space = "Y-variate", legend = TRUE, group = Y.weight, ellipse = F)
+```
+
+```{r CD - Metabolites sPLSDA 10 fig.width=20, fig.height=6, fig.fullwidth=TRUE, dpi = 350}
+pdf("plot.splsda.scores.metabolites.weight.pdf", width = 10, height = 8)
+plotIndiv(MyResult.spls.metabolites.weight, ind.names = FALSE, title = 'sPLS-metabolites on Weight', rep.space = "XY-variate", legend = TRUE, group = Y.weight, ellipse = F)
+dev.off()
+```
+
+```{r}
+set.seed(20) # for reproducbility in this vignette, otherwise increase nrepeat
+list.keepX.weight <- c(1:10,  seq(10, 100, 10))
+list.keepX.weight # to output the grid of values tested
+set.seed(20) # for reproducbility in this vignette, otherwise increase nrepeat
+tune.spls.metabolites.controlvsweight <- tune.spls(metabolites.x.weight, Y.weight, ncomp = 4, # we suggest, e.g. 4
+                                validation = 'Mfold',folds = 3, progressBar = TRUE,
+                                measure = "MSE", test.keepX = list.keepX.weight, nrepeat = 50, cpus = 2)   # suggest nrepeat = 50
+saveRDS(tune.spls.metabolites.controlvsweight, file="tune.spls.metabolite.controlvsweight.RDS")
+```
+
+```{r}
+tune.spls.metabolites.controlvsweight =  readRDS(file = "tune.spls.metabolite.controlvsweight.RDS")
+error <- tune.spls.metabolites.controlvsweight$error.rate
+ncomp.UC.metabolites.weight <- tune.spls.metabolites.controlvsweight$choice.ncomp$ncomp # optimal number of components based on t-tests on the error rate
+ncomp.UC.metabolites.weight
+```
+
+```{r}
+select.keepX.weight <- tune.spls.metabolites.controlvsweight$choice.keepX[1:ncomp.UC.metabolites.weight]  # optimal number of variables to select
+select.keepX.weight
+plot(tune.spls.metabolites.controlvsweight, col = color.jet(4))
+```
+
+```{r}
+pdf("plot.splsda.tune.controlvsweight.metabolites.pdf", width = 10, height = 8)
+plot(tune.spls.metabolites.controlvsweight, col = color.jet(4))
+dev.off()
+```
+
+## Final Model Metabolites Weight
+
+```{r fig.width=8, fig.height=6, fig.fullwidth=TRUE, dpi = 350}
+MyResult.spls.metabolites.final.weight <- spls(metabolites.x.weight, Y.weight, ncomp = 4, keepX = select.keepX.weight, mode = "regression")
+MyResult.spls.metabolites.final.weight
+
+plotIndiv(MyResult.spls.metabolites.final.weight, ind.names = FALSE, title = 'sPLS-metabolites on CD', rep.space = "XY-variate", legend = TRUE, group = Y.weight, ellipse = F)
+```
+
+```{r}
+matrix <- as.data.frame (MyResult.spls.metabolites.final.weight$variates$X)
+matrix
+```
+pdf("plot.splsda.scores.metabolites.aget.pdf", width = 5.4, height = 4)
+ggplot (matrix, aes ((comp1), (comp2))) + geom_point( size = 4, aes(colour = covariates$Age [1:9])) + theme_bw()  #+ geom_text_repel (aes (comp1, comp2, label = covariates$Age [1:9], colour = factor (covariates$Age [1:9])))
+
+```{r}
+library (ggrepel)
+pdf("plot.splsda.scores.metabolites.weight.pdf", width = 5.4, height = 4)
+#ggplot (matrix, aes ((comp1), (comp2))) + geom_point(aes(colour = "#E69F00")) + theme_bw()  + geom_text_repel (aes (comp1, comp2, label = covariates$Weight [1:9], colour = factor (covariates$Weight [1:9])))
+
+ggplot (matrix, aes ((comp1), (comp2))) + geom_point(size=4, aes(colour = covariates$Weight [1:9])) + theme_bw() # + geom_text_repel (aes (comp1, comp2, label = covariates$Weight [1:9], colour = factor (covariates$Weight [1:9])))
+dev.off()
+```
+
+```{r CD - Metabolites sPLSDA 10 fig.width=20, fig.height=6, fig.fullwidth=TRUE, dpi = 350}
+pdf("plot.splsda.scores.metabolites.weight.final.pdf", width = 10, height = 8)
+plotIndiv(MyResult.spls.metabolites.final.weight, ind.names = FALSE, title = 'PLS-metabolites on Weight', rep.space = "XY-variate", legend = TRUE, group = Y.weight, ellipse = F)
+dev.off()
+```
+
+```{r}
+MyResult.spls.metabolites.final.weight$prop_expl_var
+```
+
+## sPLS Scores Export Tables
+
+```{r}
+library (writexl)
+variates.spls.metabolites.weight.final <- as.data.frame (MyResult.spls.metabolites.final.weight$variates$X)
+variates.spls.metabolites.weight.final
+write_xlsx(variates.spls.metabolites.weight.final, "variates.spls.metabolites.weight.final.xlsx")
+```
+
+## sPLS Loadings
+
+```{r}
+loading.metabolites1.weight <- as.data.frame (MyResult.spls.metabolites.final.weight$loadings) %>% rownames_to_column (var = "name") %>% mutate (abs = abs(X.comp1)) %>% arrange (desc(abs))
+loading.metabolites1.weight
+loading.metabolites2.weight <- as.data.frame (MyResult.spls.metabolites.final.weight$loadings) %>% rownames_to_column (var = "name") %>% mutate (abs = abs(X.comp2)) %>% arrange (desc(abs))
+loading.metabolites2.weight
+loading.metabolites3.weight <- as.data.frame (MyResult.spls.metabolites.final.weight$loadings) %>% rownames_to_column (var = "name") %>% mutate (abs = abs(X.comp3)) %>% arrange (desc(abs))
+loading.metabolites3.weight
+loading.metabolites4.weight <- as.data.frame (MyResult.spls.metabolites.final.weight$loadings) %>% rownames_to_column (var = "name") %>% mutate (abs = abs(X.comp4)) %>% arrange (desc(abs))
+loading.metabolites4.weight
+```
+
+```{r}
+write_xlsx(loading.metabolites1.weight, "loading.metabolites.weight.LV1.xlsx")
+write_xlsx(loading.metabolites2.weight, "loading.metabolites.weight.LV2.xlsx")
+write_xlsx(loading.metabolites3.weight, "loading.metabolites.weight.LV3.xlsx")
+write_xlsx(loading.metabolites4.weight, "loading.metabolites.weight.LV4.xlsx")
+```
+
+```{r CD - Metabolites sPLSDA 18 Linn VIP}
+linn.vip.metabolites.weight <- vip(MyResult.spls.metabolites.final.weight)
+length (linn.vip.metabolites.weight)
+head(linn.vip.metabolites.weight)
+```
+
+```{r}
+linn.vip.metabolites.weight <- as.data.frame (linn.vip.metabolites.weight) %>% rownames_to_column("Metabolites")
+linn.vip.metabolites.weight
+
+write.xlsx(linn.vip.metabolites.weight, file = "linn.vip.metabolites.weight.xlsx")
+```
+
+# Validation Data Set
+
+```{r}
+metabolites.x.weight.validation <-  metabolites.x[10:16, ]
+metabolites.x.weight.validation
+```
+
+```{r}
+Y.weight.validation<- covariates$Weight[10:16]
+Y.weight.validation
+```
+
+```{r}
+set.seed (30)
+spls.metabolites.weight.predict <- predict (MyResult.spls.metabolites.final.weight, metabolites.x.weight.validation, dist = "max.dist")
+spls.metabolites.weight.predict
+prediction.metabolites.weight <- as.data.frame (spls.metabolites.weight.predict$predict)
+prediction.metabolites.weight
+prediction.variates.metabolites.weight <- as.data.frame (spls.metabolites.weight.predict$variates)
+prediction.variates.metabolites.weight
+Y.weight.validation
+
+prediction.table.weight <- cbind (prediction.metabolites.weight, Y.weight.validation)
+prediction.table.weight
+
+MSEP.dim1 <- sqrt (mean ((Y.weight.validation - prediction.metabolites.weight$Y.dim1)^2))
+MSEP.dim1
+
+MSEP.dim2 <- sqrt (mean ((Y.weight.validation - prediction.metabolites.weight$Y.dim2)^2))
+MSEP.dim2
+
+MSEP.dim3 <- sqrt (mean ((Y.weight.validation - prediction.metabolites.weight$Y.dim3)^2))
+MSEP.dim3
+
+MSEP.dim4 <- sqrt (mean ((Y.weight.validation - prediction.metabolites.weight$Y.dim4)^2))
+MSEP.dim4
+
+RSQUARE = function(y_actual,y_predict){
+  cor(y_actual,y_predict)^2
+}
+
+RSQUARE (Y.weight.validation, prediction.metabolites.weight$Y.dim1)
+RSQUARE (Y.weight.validation, prediction.metabolites.weight$Y.dim2)
+RSQUARE (Y.weight.validation, prediction.metabolites.weight$Y.dim3)
+RSQUARE (Y.weight.validation, prediction.metabolites.weight$Y.dim4)
+```
+
+
+```{r}
+VIP.weight <- linn.vip.metabolites.weight %>% arrange (desc (comp1))
+VIP.weight.table <- VIP.weight[1:10, ]
+VIP.weight.table
+```
+
+```{r fig.width=12, fig.height=15, fig.fullwidth=TRUE, dpi = 350}
+colVIPUC <- ggplot(VIP.weight.table, aes(x=reorder (Metabolites, - comp1), y=comp1)) + geom_col(color="darkblue", fill="#FFD54D",  width = 0.5) + theme(legend.text = element_text(colour="black", size=30)) +  theme(legend.title = element_text(colour="black", size=30)) + labs(x = "VIP", y = "VIP") + theme(axis.text=element_text(size=30), axis.title.x = element_text(size = 30)) + theme(axis.title.y = element_text(size = 30)) + theme_bw(base_size = 35) + theme(legend.position = "top") + theme(axis.text.x = element_text(angle = 90)) + coord_flip()
+colVIPUC 
+ggsave("plot.spls.weight.VIP.top10.pdf",units="in", width=10, height=10, dpi=350)
+```
+
+######################################################################################
+
+# Metabolites sPLSR: Meetabolites x Age
+
+######################################################################################
+
+```{r}
+metabolites.x.age <-  metabolites.x[1:9, ]
+metabolites.x.age
+```
+
+```{r}
+Y.age<- covariates$Age[1:9]
+Y.age
+```
+
+```{r}
+MyResult.spls.metabolites.age <- spls(metabolites.x.age, Y.age, ncomp= 3, mode = "regression")
+MyResult.spls.metabolites.age
+plotIndiv(MyResult.spls.metabolites.age, ind.names = FALSE, title = 'sPLS-metabolites on age', rep.space = "XY-variate", legend = TRUE, group = Y.age, ellipse = F)
+```
+
+```{r CD - Metabolites sPLSDA 10 fig.width=20, fig.height=6, fig.fullwidth=TRUE, dpi = 350}
+pdf("plot.splsda.scores.metabolites.age.pdf", width = 10, height = 8)
+plotIndiv(MyResult.spls.metabolites.age, ind.names = FALSE, title = 'sPLS-metabolites on age', rep.space = "XY-variate", legend = TRUE, group = Y.age, ellipse = F)
+dev.off()
+```
+
+
+```{r}
+set.seed(20) # for reproducbility in this vignette, otherwise increase nrepeat
+list.keepX.age <- c(1:10,  seq(10, 100, 10))
+list.keepX.age # to output the grid of values tested
+set.seed(20) # for reproducbility in this vignette, otherwise increase nrepeat
+tune.spls.metabolites.controlvsage <- tune.spls(metabolites.x.age, Y.age, ncomp = 4, # we suggest, e.g. 4
+                                validation = 'Mfold',folds = 3, progressBar = TRUE,
+                                measure = "MSE", test.keepX = list.keepX.age, nrepeat = 50, cpus = 2)   # suggest nrepeat = 50
+saveRDS(tune.spls.metabolites.controlvsage, file="tune.spls.metabolite.controlvsage.RDS")
+```
+
+```{r}
+tune.spls.metabolites.controlvsage =  readRDS(file = "tune.spls.metabolite.controlvsage.RDS")
+error <- tune.spls.metabolites.controlvsage$error.rate
+ncomp.UC.metabolites.age <- tune.spls.metabolites.controlvsage$choice.ncomp$ncomp # optimal number of components based on t-tests on the error rate
+ncomp.UC.metabolites.age
+```
+
+```{r}
+select.keepX.age <- tune.spls.metabolites.controlvsage$choice.keepX[1:ncomp.UC.metabolites.age]  # optimal number of variables to select
+select.keepX.age
+plot(tune.spls.metabolites.controlvsage, col = color.jet(4))
+```
+```{r}
+pdf("plot.splsda.tune.controlvsage.metabolites.pdf", width = 10, height = 8)
+plot(tune.spls.metabolites.controlvsage, col = color.jet(4))
+dev.off()
+```
+
+
+## Final Model Metabolites age
+
+```{r fig.width=8, fig.height=6, fig.fullwidth=TRUE, dpi = 350}
+MyResult.spls.metabolites.final.age <- spls(metabolites.x.age, Y.age, ncomp = 4, keepX = select.keepX.age)
+MyResult.spls.metabolites.final.age
+
+plotIndiv(MyResult.spls.metabolites.final.age, ind.names = FALSE, title = 'sPLS-metabolites on CD', rep.space = "XY-variate", legend = TRUE, group = Y.age, ellipse = F)
+```
+
+```{r}
+matrix <- as.data.frame (MyResult.spls.metabolites.final.age$variates$X)
+matrix
+```
+
+
+```{r}
+library (ggrepel)
+pdf("plot.splsda.scores.metabolites.aget.pdf", width = 5.4, height = 4)
+ggplot (matrix, aes ((comp1), (comp2))) + geom_point( size = 4, aes(colour = covariates$Age [1:9])) + theme_bw()  #+ geom_text_repel (aes (comp1, comp2, label = covariates$Age [1:9], colour = factor (covariates$Age [1:9])))
+#ggplot (matrix, aes ((comp1), (comp2))) + geom_point( size = 4, aes(colour = "#E69F00")) + theme_bw()  + geom_text_repel (aes (comp1, comp2, label = covariates$Age [1:9], colour = factor (covariates$Age [1:9])))
+dev.off()
+```
+
+```{r CD - Metabolites sPLSDA 10 fig.width=20, fig.height=6, fig.fullwidth=TRUE, dpi = 350}
+pdf("plot.splsda.scores.metabolites.age.final.pdf", width = 10, height = 8)
+plotIndiv(MyResult.spls.metabolites.final.age, ind.names = FALSE, title = 'sPLS-metabolites on CD', rep.space = "XY-variate", legend = TRUE, group = Y.age, ellipse = F)
+dev.off()
+```
+
+```{r}
+MyResult.spls.metabolites.final.age$prop_expl_var
+```
+
+## sPLS Scores Export Tables
+
+```{r}
+library (writexl)
+variates.spls.metabolites.age.final <- as.data.frame (MyResult.spls.metabolites.final.age$variates$X)
+variates.spls.metabolites.age.final
+write_xlsx(variates.spls.metabolites.age.final, "variates.spls.metabolites.age.final.xlsx")
+```
+
+## sPLS Loadings
+
+```{r}
+loading.metabolites1.age <- as.data.frame (MyResult.spls.metabolites.final.age$loadings) %>% rownames_to_column (var = "name") %>% mutate (abs = abs(X.comp1)) %>% arrange (desc(abs))
+loading.metabolites1.age
+loading.metabolites2.age <- as.data.frame (MyResult.spls.metabolites.final.age$loadings) %>% rownames_to_column (var = "name") %>% mutate (abs = abs(X.comp2)) %>% arrange (desc(abs))
+loading.metabolites2.age
+loading.metabolites3.age <- as.data.frame (MyResult.spls.metabolites.final.age$loadings) %>% rownames_to_column (var = "name") %>% mutate (abs = abs(X.comp3)) %>% arrange (desc(abs))
+loading.metabolites3.age
+loading.metabolites4.age <- as.data.frame (MyResult.spls.metabolites.final.age$loadings) %>% rownames_to_column (var = "name") %>% mutate (abs = abs(X.comp4)) %>% arrange (desc(abs))
+loading.metabolites4.age
+```
+
+
+
+```{r}
+write_xlsx(loading.metabolites1.age, "loading.metabolites.age.LV1.xlsx")
+write_xlsx(loading.metabolites2.age, "loading.metabolites.age.LV2.xlsx")
+write_xlsx(loading.metabolites3.age, "loading.metabolites.age.LV3.xlsx")
+write_xlsx(loading.metabolites4.age, "loading.metabolites.age.LV4.xlsx")
+```
+
+```{r CD - Metabolites sPLSDA 18 Linn VIP}
+linn.vip.metabolites.age <- vip(MyResult.spls.metabolites.final.age)
+length (linn.vip.metabolites.age)
+head(linn.vip.metabolites.age)
+```
+
+```{r}
+linn.vip.metabolites.age <- as.data.frame (linn.vip.metabolites.age) %>% rownames_to_column("Metabolites")
+linn.vip.metabolites.age
+
+write.xlsx(linn.vip.metabolites.age, file = "linn.vip.metabolites.age.xlsx")
+```
+
+
+# Validation Data Set
+
+```{r}
+metabolites.x.age.validation <-  metabolites.x[12:16, ]
+metabolites.x.age.validation
+```
+
+```{r}
+Y.age.validation<- covariates$Age[12:16]
+Y.age.validation
+```
+
+```{r}
+set.seed (30)
+spls.metabolites.age.predict <- predict (MyResult.spls.metabolites.final.age, metabolites.x.age.validation, dist = "max.dist")
+spls.metabolites.age.predict
+prediction.metabolites.age <- as.data.frame (spls.metabolites.age.predict$predict)
+prediction.metabolites.age
+prediction.variates.metabolites.age <- as.data.frame (spls.metabolites.age.predict$variates)
+prediction.variates.metabolites.age
+Y.age.validation
+
+prediction.table.age <- cbind (prediction.metabolites.age, Y.age.validation)
+prediction.table.age
+
+MSEP.dim1 <- sqrt (mean ((Y.age.validation - prediction.metabolites.age$Y.dim1)^2))
+MSEP.dim1
+
+MSEP.dim2 <- sqrt (mean ((Y.age.validation - prediction.metabolites.age$Y.dim2)^2))
+MSEP.dim2
+
+MSEP.dim3 <- sqrt (mean ((Y.age.validation - prediction.metabolites.age$Y.dim3)^2))
+MSEP.dim3
+
+MSEP.dim4 <- sqrt (mean ((Y.age.validation - prediction.metabolites.age$Y.dim4)^2))
+MSEP.dim4
+
+RSQUARE = function(y_actual,y_predict){
+  cor(y_actual,y_predict)^2
+}
+
+RSQUARE (Y.age.validation, prediction.metabolites.age$Y.dim1)
+RSQUARE (Y.age.validation, prediction.metabolites.age$Y.dim2)
+RSQUARE (Y.age.validation, prediction.metabolites.age$Y.dim3)
+RSQUARE (Y.age.validation, prediction.metabolites.age$Y.dim4)
+```
+
+
+```{r}
+VIP.age <- linn.vip.metabolites.age %>% arrange (desc (comp1))
+VIP.age.table <- VIP.age[1:10, ]
+VIP.age.table
+```
+
+```{r fig.width=12, fig.height=15, fig.fullwidth=TRUE, dpi = 350}
+colVIPUC <- ggplot(VIP.age.table, aes(x=reorder (Metabolites, - comp1), y=comp1)) + geom_col(color="darkblue", fill="#FFD54D",  width = 0.5) + theme(legend.text = element_text(colour="black", size=30)) +  theme(legend.title = element_text(colour="black", size=30)) + labs(x = "VIP", y = "VIP") + theme(axis.text=element_text(size=30), axis.title.x = element_text(size = 30)) + theme(axis.title.y = element_text(size = 30)) + theme_bw(base_size = 35) + theme(legend.position = "top") + theme(axis.text.x = element_text(angle = 90)) + coord_flip()
+colVIPUC 
+ggsave("plot.spls.age.VIP.top10.pdf",units="in", width=10, height=10, dpi=350)
+```
+
+```{r}
+sessionInfo()
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
